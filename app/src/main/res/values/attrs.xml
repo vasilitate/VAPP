@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="ProgressWidget">
+        <attr name="hideError" format="boolean" />
+        <attr name="percentageMode" format="boolean" />
+        <attr name="hideCount" format="boolean" />
+        <attr name="hideProgressBar" format="boolean" />
+    </declare-styleable>
+
+</resources>

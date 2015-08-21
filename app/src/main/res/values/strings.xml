@@ -1,0 +1,29 @@
+<resources>
+    <string name="vapp_progress_text_formatter">%1$d / %2$d</string>
+
+    <string name="vapp_not_available_error_no_sim">Unable to use VAPP! as your SIM cannot be detected</string>
+    <string name="vapp_not_available_error_no_network">Unable to use VAPP! - no network found</string>
+    <string name="vapp_network_not_supported">VAPP! is not currently supported on your network</string>
+
+    <string name="vapp_sms_sent_failure_generic">General SMS Send error.  Please try again later.</string>
+    <string name="vapp_sms_sent_failure_no_service">No SMS Service.  Please check your settings and try again.</string>
+    <string name="vapp_sms_sent_failure_null_pdu">No PUS set.  Please contact the App Retailer.</string>
+    <string name="vapp_sms_sent_failure_radio_off">Radio turned off!  Please check your settings and try again.</string>
+    <string name="vapp_sms_delivery_failure">SMS Delivery Failed.  Please try again later.</string>
+    <string name="notification_completed_title">VAPP! Payment Complete</string>
+    <string name="notification_completed_message">Purchase has been successful!</string>
+
+    <!--<string-array name="billing_route_A">-->
+        <!--<item>23403</item>-->
+    <!--</string-array>-->
+
+    <!--<string-array name="billing_route_B">-->
+        <!--<item>23410</item>-->
+    <!--</string-array>-->
+
+    <!--<string-array name="billing_route_C">-->
+        <!--<item>23420</item>-->
+        <!--<item>23477</item>-->
+    <!--</string-array>-->
+
+</resources>
