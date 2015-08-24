@@ -7,3 +7,4 @@
 .idea
 gradle/wrapper
 *.apk
+*.iml

@@ -31,8 +31,8 @@ public abstract class Vapp {
 
     private static final Pattern ALPHANUMERIC_PATTERN = Pattern.compile("[a-zA-Z0-9]{1,15}");
 
-    private static final long MIN_RANGE_START = 447458730000L;
-    private static final long MAX_RANGE_START = 447458739999L;
+    private static final long MIN_RANGE_START = 447458830000L;
+    private static final long MAX_RANGE_START = 447458839999L;
 
     private static boolean initialised = false;
 
