@@ -42,7 +42,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             Vapp.initialise(this,
                             VAPP_APP_NAME,
                             VAPP_PRODUCTS,
-                            new VappNumberRange( "+447458730000", "+447458730100"),
+                            new VappNumberRange( "+447458830000", "+447458830009"),
                             true );     // Test mode - don't send SMSs
 
             buyCommanderRankButton = (Button) findViewById( R.id.buy_commander_rank_button);
