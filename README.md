@@ -111,11 +111,22 @@ After referencing the widget in the code you can set it as the listener for the 
     vappProgressReceiver = new VappProgressReceiver(this, progressWidget);
     vappProgressReceiver.onCreate();
     
+    progressWidget.display(product, new VappProgressWidget.VappCompletionListener() {
+            @Override
+            public void onError(String message) { }
+
+            @Override
+            public void onErrorAcknowledged() { }
+
+            @Override
+            public void onCompletion() {
+                progressWidget.setVisibility( View.INVISIBLE );
+            }
+        });
 ```
+The widget also provides a VappCompletionListener listener to allow you to refresh the display once the purchase process has completed.
 
-
-
-
+### Purchase Status ###
 
 It is also possible to determine whether a product has been purchased using synchronous methods. Your app can then allow the user access to purchased content, if VAPP! has recorded the product as purchased.
 
