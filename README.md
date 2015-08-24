@@ -102,8 +102,11 @@ You can make use of a purpose built progress view which allows you to display ei
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 ```
+To get the following progress view displayed:
 
 ![Progess Widget](/readmeresources/VappStoreProgress.png "Progess Widget")
+
+You can set the 'hideCount' or 'hideProgressBar' attributes on this widget in the layout file if you only which to display the progress bar or numeric respectively.
 
 After referencing the widget in the code you can set it as the listener for the VappProgressReceiver as follows:
 
