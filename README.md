@@ -94,6 +94,7 @@ The SMS purchase may take some time (10's of minutes!), callbacks are provided w
 
 ### Progress Widget ###
 
+You can make use of a purpose built progress view which allows you to display either the number of SMS's sent or the percentage completion as a progress bar and/or a numeric.  Just add the following to your layout file:
 
 ...
     <com.vasilitate.vapp.sdk.VappProgressWidget
