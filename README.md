@@ -71,13 +71,16 @@ new AlertDialog.Builder(PaymentActivity.this)
       }).show();
 ```
 
+Only one product may be purchased at a time.  The SDK will enforce this however you should design your app so that it is obvious to the user that this is the case, e.g. by disabling purchasing options while one is in progress.
+
 ### Tracking Purchases
 
-The SMS purchase may take some time, callbacks are provided with the VappProgressReceiver:
+The SMS purchase may take some time (10's of minutes!), callbacks are provided with the VappProgressReceiver:
 ```
 @Override public void onCreate(@Nullable Bundle savedInstanceState) {
   super.onCreate(savedInstanceState)
   VappProgressReceiver vappProgressReceiver = new VappProgressReceiver(context, listener);
+  vappProgressReceiver.onCreate();
 }
 
 @Override public void onDestroy() {
@@ -88,6 +91,25 @@ The SMS purchase may take some time, callbacks are provided with the VappProgres
     }
 }
 ```
+
+### Progress Widget ###
+
+
+...
+    <com.vasilitate.vapp.sdk.VappProgressWidget
+        android:id="@+id/progress_widget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+...
+
+'''
+    VappProgressWidget progressWidget = (VappProgressWidget) findViewById( R.id.progress_widget);
+ 
+    vappProgressReceiver = new VappProgressReceiver(this, progressWidget);
+    vappProgressReceiver.onCreate();
+'''
+
+
 
 It is also possible to determine whether a product has been purchased using synchronous methods. Your app can then allow the user access to purchased content, if VAPP! has recorded the product as purchased.
 
