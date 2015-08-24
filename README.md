@@ -103,6 +103,8 @@ You can make use of a purpose built progress view which allows you to display ei
         android:layout_height="wrap_content"/>
 ```
 
+![Progess Widget](/readmeresources/VappStoreProgress.png "Progess Widget")
+
 After referencing the widget in the code you can set it as the listener for the VappProgressReceiver as follows:
 
 ```
