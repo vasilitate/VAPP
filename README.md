@@ -96,19 +96,24 @@ The SMS purchase may take some time (10's of minutes!), callbacks are provided w
 
 You can make use of a purpose built progress view which allows you to display either the number of SMS's sent or the percentage completion as a progress bar and/or a numeric.  Just add the following to your layout file:
 
-'''
+```
     <com.vasilitate.vapp.sdk.VappProgressWidget
         android:id="@+id/progress_widget"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
-'''
+```
 
-'''
+After referencing the widget in the code you can set it as the listener for the VappProgressReceiver as follows:
+
+```
     VappProgressWidget progressWidget = (VappProgressWidget) findViewById( R.id.progress_widget);
  
     vappProgressReceiver = new VappProgressReceiver(this, progressWidget);
     vappProgressReceiver.onCreate();
-'''
+    
+```
+
+
 
 
 
