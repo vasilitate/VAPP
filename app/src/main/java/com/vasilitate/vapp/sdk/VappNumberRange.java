@@ -3,7 +3,7 @@ package com.vasilitate.vapp.sdk;
 import com.vasilitate.vapp.sdk.exceptions.InvalidVappNumberException;
 
 /**
- * A range of numbers which the user should send SMS to
+ * A range of numbers provided by Vasilitate, which all SMSs should be sent to.
  */
 public class VappNumberRange {
 

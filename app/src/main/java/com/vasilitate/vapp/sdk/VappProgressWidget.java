@@ -15,9 +15,11 @@ import android.widget.TextView;
 
 import com.vasilitate.vapp.R;
 
-
-public class VappProgressWidget extends RelativeLayout
-		implements VappProgressListener {
+/**
+ * A custom view which displays either the number of SMS's sent or the percentage completion
+ * as a progress bar and/or a numeric.
+ */
+public class VappProgressWidget extends RelativeLayout implements VappProgressListener {
 
 	public interface VappProgressWidgetListener {
 

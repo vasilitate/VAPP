@@ -3,7 +3,7 @@ package com.vasilitate.vapp.sdk;
 import android.content.Context;
 
 /**
- * Provides mocked which provide information about the telephony state
+ * Provides mocked information about the telephony state
  */
 class MockDeviceStateWrapper implements DeviceStateContract {
 

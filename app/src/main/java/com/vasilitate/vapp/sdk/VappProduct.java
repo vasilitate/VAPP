@@ -1,8 +1,7 @@
 package com.vasilitate.vapp.sdk;
 
 /**
- * A VAPP Product which may be used to unlock functionality once the given number
- * of SMSs have been successfully sent.
+ * Represents a Virtual Product which can be purchased by sending SMSs.
  */
 public class VappProduct {
 

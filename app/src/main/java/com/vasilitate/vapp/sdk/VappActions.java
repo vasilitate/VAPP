@@ -35,7 +35,13 @@ interface VappActions {
      */
     String EXTRA_PRODUCT_ID = "com.vasilitate.vapp.sdk.EXTRA_PRODUCT_ID";
 
+    /**
+     * Determines whether user is allowed to exit payment screen or not
+     */
     String EXTRA_MODAL = "com.vasilitate.vapp.sdk.EXTRA_MODAL";
 
+    /**
+     * Shows a notification stating payment progress
+     */
     String EXTRA_NOTIFICATION_INVOKED = "com.vasilitate.vapp.sdk.EXTRA_NOTIFICATION_INVOKED";
 }

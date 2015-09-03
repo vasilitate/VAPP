@@ -49,7 +49,7 @@ public abstract class Vapp {
      * This should be called in onCreate() to initialise the Vapp SDK with the application Vapp Id,
      * a list of products available to the user & the range of destination numbers allocated by
      * Vasilitate for this App.
-     * <p>
+     * <p/>
      * If this method is not called, the behaviour of other methods is undetermined.
      *
      * @param context                the current context
@@ -67,7 +67,7 @@ public abstract class Vapp {
                                                String appVappId,
                                                List<VappProduct> products,
                                                VappNumberRange destinationNumberRange,
-                                               boolean testMode )
+                                               boolean testMode)
             throws InvalidSmsCountException, InvalidApplicationVappIdException,
             InvalidProductIdException, InvalidVappNetworkException, InvalidVappProductException,
             InvalidVappNumberException {
@@ -75,7 +75,7 @@ public abstract class Vapp {
         validateApplicationVappId(appVappId);
         Vapp.appVappId = appVappId;
 
-        VappConfiguration.setTestMode( context, testMode );
+        VappConfiguration.setTestMode(context, testMode);
 
         initialiseBillingRouteLookup(context);
 
@@ -101,8 +101,8 @@ public abstract class Vapp {
         }
         VappProductManager.addProducts(context, productList); // persist state
 
-        if( destinationNumberRange.getStartOfRange() >= MIN_RANGE_START
-         && destinationNumberRange.getEndOfRange() <= MAX_RANGE_START) {
+        if (destinationNumberRange.getStartOfRange() >= MIN_RANGE_START
+                && destinationNumberRange.getEndOfRange() <= MAX_RANGE_START) {
 
             Vapp.destinationNumberRange = destinationNumberRange;
         }
@@ -114,8 +114,8 @@ public abstract class Vapp {
 
         VappProduct productBeingPurchased = getProductBeingPurchased(context);
 
-        if( productBeingPurchased != null ) {
-            startSMSService( context, productBeingPurchased.getProductId() );
+        if (productBeingPurchased != null) {
+            startSMSService(context, productBeingPurchased.getProductId());
         }
     }
 
@@ -272,7 +272,7 @@ public abstract class Vapp {
     /**
      * Returns any product which is currently being purchases.   This function must be called
      * at started to allow for the resumption of any interrupted purchase.
-     * 
+     *
      * @param context the current context
      * @return the product being purchased (null if none are).
      * @throws VappException Vapp exception - see its message for details.
@@ -306,15 +306,15 @@ public abstract class Vapp {
     /**
      * Displays the Vapp Payment screen
      *
-     * @param context  the current context
-     * @param product  the product to initial a new purchase with.
-     * @param modal    if true the payment but complete before the user can exit the screen.
+     * @param context the current context
+     * @param product the product to initial a new purchase with.
+     * @param modal   if true the payment but complete before the user can exit the screen.
      * @return true if the screen was displayed.
      * @throws VappException Vapp exception - see its message for details.
      */
     public static boolean showVappPaymentScreen(Context context,
                                                 VappProduct product,
-                                                boolean modal ) throws VappException {
+                                                boolean modal) throws VappException {
 
         // Check that this device is suitable for sending SMSs
         if (!Vapp.isSIMPresent(context)) {
@@ -353,6 +353,13 @@ public abstract class Vapp {
         return getDeviceStateContract(context).getOriginatingNetwork();
     }
 
+    /**
+     * Gets the billing route for a purchase
+     *
+     * @param context the current context
+     * @return the billing route as a string
+     * @throws VappException Vapp exception - see its message for details.
+     */
     static String getBillingRoute(Context context) throws VappException {
 
         checkIfInitialised();
@@ -398,13 +405,13 @@ public abstract class Vapp {
         String originatingNetworkName = getOriginatingNetworkName(context);
         String originatingNetworkCountry = getOriginatingNetworkCountry(context);
         return VappSmsGenerator.generateSms(appVappId,
-                product.getProductId(),
-                smsCount,
-                smsIndex,
-                imei,
-                isRoaming(context),
-                originatingNetworkName,
-                originatingNetworkCountry);
+                                            product.getProductId(),
+                                            smsCount,
+                                            smsIndex,
+                                            imei,
+                                            isRoaming(context),
+                                            originatingNetworkName,
+                                            originatingNetworkCountry);
     }
 
     static VappProduct getProduct(String productId) throws VappException {
@@ -448,10 +455,10 @@ public abstract class Vapp {
         return destinationNumberRange;
     }
 
-    static void startSMSService( Context context, String productId ) {
+    static void startSMSService(Context context, String productId) {
 
         Intent intent = new Intent(context, VappSmsService.class);
-        intent.putExtra( VappActions.EXTRA_PRODUCT_ID, productId );
+        intent.putExtra(VappActions.EXTRA_PRODUCT_ID, productId);
         context.startService(intent);
     }
 

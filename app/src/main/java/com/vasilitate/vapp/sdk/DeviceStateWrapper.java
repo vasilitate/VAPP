@@ -4,7 +4,7 @@ import android.content.Context;
 import android.telephony.TelephonyManager;
 
 /**
- * Provides methods which provide information about the telephony state
+ * Provides information about the current telephony state
  */
 class DeviceStateWrapper implements DeviceStateContract {
     

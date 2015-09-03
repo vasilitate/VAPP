@@ -7,7 +7,8 @@ import android.content.IntentFilter;
 import android.text.TextUtils;
 
 /**
- * Wrapper class for the progress receiver.
+ * Listens for updates on a product purchase, using a Broadcast Receiver. Implementations should
+ * forward onCreate() and onDestroy() lifecycle methods to this class from the Activity.
  */
 public class VappProgressReceiver {
 
@@ -16,26 +17,43 @@ public class VappProgressReceiver {
 
     private SmsProgressReceiver smsProgressReceiver;
 
-    public VappProgressReceiver( Context context,
-                                 VappProgressListener progressListener ) {
+    /**
+     * Creates a new instance of a progress receiver
+     *
+     * @param context          the current context
+     * @param progressListener an implementation of a ProgressListener which responds to updates in purchase state
+     */
+    public VappProgressReceiver(Context context,
+                                VappProgressListener progressListener) {
 
         this.context = context;
         this.progressListener = progressListener;
     }
-    
+
+    /**
+     * This method should be called during Activity#onCreate(), and registers a Broadcast receiver.
+     */
     public void onCreate() {
         smsProgressReceiver = new SmsProgressReceiver();
         context.registerReceiver(smsProgressReceiver,
-                new IntentFilter(VappActions.ACTION_SMS_PROGRESS));
+                                 new IntentFilter(VappActions.ACTION_SMS_PROGRESS));
     }
 
+    /**
+     * This method should be called during Activity#onDestroy(), and unregisters a Broadcast receiver.
+     */
     public void onDestroy() {
-        if( smsProgressReceiver != null ) {
-            context.unregisterReceiver( smsProgressReceiver );
+        if (smsProgressReceiver != null) {
+            context.unregisterReceiver(smsProgressReceiver);
         }
     }
 
-    public void setListener( VappProgressListener progressListener ) {
+    /**
+     * Sets the progressListener
+     *
+     * @param progressListener an implementation of a ProgressListener which responds to updates in purchase state
+     */
+    public void setListener(VappProgressListener progressListener) {
         this.progressListener = progressListener;
     }
 
@@ -44,7 +62,7 @@ public class VappProgressReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            if( progressListener != null ) {
+            if (progressListener != null) {
 
                 boolean completed = intent.getBooleanExtra(VappActions.EXTRA_SMS_COMPLETED, false);
 
