@@ -2,8 +2,7 @@
 The VAPP! mobile payment SDK for Android
 
 # Getting Started
-VAPP! is provided as a standalone [aar file](http://tools.android.com/tech-docs/new-build-system/aar-format).
-You should copy this file to **/MyProject/app/aars/vapp.aar**. Your build.gradle file should then be modified 
+VAPP! is provided as a maven artefact. Your build.gradle file should then be modified 
 so that it matches the code snippet below:
 
 ```
