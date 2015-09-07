@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.view.View;
 import android.widget.TextView;
 
+import com.beardedhen.androidbootstrap.FontAwesomeText;
 import com.vasilitate.vapp.R;
 
 /**
@@ -19,6 +20,7 @@ public class VappProgressActivity extends Activity implements VappProgressListen
     private TextView progressText;
     private TextView percentageView;
     private View progressBar;
+    private FontAwesomeText cancelButton;
 
     private VappProduct currentProduct;
 
@@ -36,6 +38,13 @@ public class VappProgressActivity extends Activity implements VappProgressListen
         progressText = (TextView) findViewById( R.id.countdown_text );
         percentageView = (TextView) findViewById( R.id.percentage_view );
         progressBar = findViewById(R.id.vapp_progress_bar);
+        cancelButton = (FontAwesomeText) findViewById(R.id.progress_cancel_button);
+
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                Vapp.cancelVappPayment(getApplicationContext());
+            }
+        });
 
         modalPaymentMode = getIntent().getExtras().getBoolean(VappActions.EXTRA_MODAL, true);
 
@@ -132,9 +141,11 @@ public class VappProgressActivity extends Activity implements VappProgressListen
         Vapp.showErrorMessage( VappProgressActivity.this, message );
     }
 
-    @Override
-    public void onCompletion() {
+    @Override public void onCancelled() {
+        Vapp.showErrorMessage(this, getString(R.string.cancelled_purchase));
+    }
 
+    @Override public void onCompletion() {
         progressBar.setVisibility( View.INVISIBLE );
 
         // Just delay the closing of the screen so that user can see the completion
@@ -145,4 +156,5 @@ public class VappProgressActivity extends Activity implements VappProgressListen
             }
         }, DELAY_AFTER_FOREGROUND_COMPLETION );
     }
+
 }

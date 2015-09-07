@@ -1,9 +1,9 @@
 package com.vasilitate.vapp.sdk;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 
 import com.vasilitate.vapp.R;
@@ -49,13 +49,15 @@ public abstract class Vapp {
      * This should be called in onCreate() to initialise the Vapp SDK with the application Vapp Id,
      * a list of products available to the user & the range of destination numbers allocated by
      * Vasilitate for this App.
-     * <p/>
+     * <p>
      * If this method is not called, the behaviour of other methods is undetermined.
      *
      * @param context                the current context
      * @param appVappId              the unique application Id (1 - 15 alpha-numeric characters (no spaces))
      * @param products               a list of VappProduct objects, representing the available products
      * @param destinationNumberRange range of destination numbers allocated by Vasilitate your App.
+     * @param testMode               false for default functionality, true to disable SMS sending for test purposes
+     * @param cancellableProducts    true if users should be able to cancel product purchases (default), false if not
      * @throws InvalidApplicationVappIdException invalid application Vapp Id.
      * @throws InvalidProductIdException         invalid Product Id.
      * @throws InvalidVappNetworkException       invalid Vapp Network.
@@ -67,7 +69,8 @@ public abstract class Vapp {
                                                String appVappId,
                                                List<VappProduct> products,
                                                VappNumberRange destinationNumberRange,
-                                               boolean testMode)
+                                               boolean testMode,
+                                               boolean cancellableProducts)
             throws InvalidSmsCountException, InvalidApplicationVappIdException,
             InvalidProductIdException, InvalidVappNetworkException, InvalidVappProductException,
             InvalidVappNumberException {
@@ -76,10 +79,11 @@ public abstract class Vapp {
         Vapp.appVappId = appVappId;
 
         VappConfiguration.setTestMode(context, testMode);
+        VappConfiguration.setCancellableProducts(context, cancellableProducts);
 
         initialiseBillingRouteLookup(context);
 
-        if (products == null || products.size() == 0) {
+        if (products == null || products.isEmpty()) {
             throw new InvalidVappProductException("No VAPP! products setup");
         }
 
@@ -281,7 +285,8 @@ public abstract class Vapp {
 
         for (VappProduct product : productList) {
 
-            if (Vapp.isSMSPaymentInProgress(context, product)) {
+            if (Vapp.isSMSPaymentInProgress(context, product)
+                    && !VappConfiguration.isProductCancelled(context, product.getProductId())) {
                 return product;
             }
         }
@@ -338,6 +343,17 @@ public abstract class Vapp {
         intent.putExtra(VappActions.EXTRA_MODAL, modal);
         context.startActivity(intent);
         return true;
+    }
+
+    /**
+     * Cancels a payment that is currently in progress for a product. This will stop any further SMSs
+     * from being sent & retain the number of SMS already sent (if any)
+     *
+     * @param context     the current context
+     * @throws VappException Vapp exception - see its message for details.
+     */
+    public static void cancelVappPayment(Context context) throws VappException {
+        context.sendBroadcast(new Intent(VappSmsService.INTENT_CANCEL_PAYMENT));
     }
 
     /**

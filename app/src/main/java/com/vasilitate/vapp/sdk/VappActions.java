@@ -21,6 +21,11 @@ interface VappActions {
     String EXTRA_SMS_COMPLETED = "com.vasilitate.vapp.sdk.EXTRA_SMS_COMPLETED";
 
     /**
+     * The sending of the SMSs has cancelled.
+     */
+    String EXTRA_SMS_CANCELLED = "com.vasilitate.vapp.sdk.EXTRA_SMS_CANCELLED";
+
+    /**
      * The sent SMS count
      */
     String EXTRA_SMS_SENT_COUNT = "com.vasilitate.vapp.sdk.EXTRA_SMS_SENT_COUNT";

@@ -43,7 +43,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             VAPP_APP_NAME,
                             VAPP_PRODUCTS,
                             new VappNumberRange( "+447458830000", "+447458830009"),
-                            true );     // Test mode - don't send SMSs
+                            true,     // Test mode - don't send SMSs
+                            true);
 
             buyCommanderRankButton = (Button) findViewById( R.id.buy_commander_rank_button);
             progressWidget = (VappProgressWidget) findViewById( R.id.progress_widget);

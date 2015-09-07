@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.beardedhen.androidbootstrap.FontAwesomeText;
 import com.vasilitate.vapp.R;
 
 /**
@@ -38,6 +39,7 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
 
 	private ProgressBar smsProgress;
 	private TextView progressPercentageView;
+	private FontAwesomeText cancelButton;
 
 //	private int intervalStartDownCount;
 
@@ -71,6 +73,13 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
 
 		smsProgress = (ProgressBar) view.findViewById(R.id.sms_progress);
 		progressPercentageView = (TextView) view.findViewById( R.id.progress_percentage_view);
+        cancelButton = (FontAwesomeText) view.findViewById(R.id.progress_cancel_button);
+
+        cancelButton.setOnClickListener(new OnClickListener() {
+            @Override public void onClick(View v) {
+                Vapp.cancelVappPayment(getContext());
+            }
+        });
 
     	this.addView(view);
 	}
@@ -141,7 +150,7 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
         }
 
 		if( progressListener != null ) {
-			progressListener.onSMSSent( progress, progressPercentage );
+			progressListener.onSMSSent(progress, progressPercentage);
 		}
 	}
 
@@ -169,16 +178,16 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
 			alertBuilder.setMessage(message)
 					.setTitle("VAPP! Error")
 					.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialogInterface, int i) {
-							if (progressListener != null) {
-								progressListener.onErrorAcknowledged();
-                            } else
-                            if( completionListener != null ) {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            if (progressListener != null) {
+                                progressListener.onErrorAcknowledged();
+                            }
+                            else if (completionListener != null) {
                                 completionListener.onErrorAcknowledged();
-							}
-						}
-					});
+                            }
+                        }
+                    });
 		}
 
         if( progressListener != null ) {
@@ -190,7 +199,6 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
 
 	@Override
 	public void onCompletion() {
-
         Log.d("Vapp!", "onCompletion");
 
 
@@ -215,5 +223,12 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
                 }
             }
         }, 2000);
-	}
+    }
+
+    @Override public void onCancelled() {
+        setVisibility(GONE);
+        Context context = getContext();
+        Vapp.showErrorMessage(context, context.getString(R.string.cancelled_purchase));
+    }
+
 }

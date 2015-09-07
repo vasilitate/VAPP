@@ -31,4 +31,11 @@ public interface VappProgressListener {
      * Called when a product purchase is fully completed.
      */
     void onCompletion();
+
+
+    /**
+     * Called when a product purchase is cancelled
+     */
+    void onCancelled();
+
 }

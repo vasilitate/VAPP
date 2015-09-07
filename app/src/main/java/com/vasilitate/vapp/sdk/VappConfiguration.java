@@ -22,6 +22,8 @@ abstract class VappConfiguration {
     private static final String CURRENT_DOWNLOAD_SMS_COUNT_SUFFIX = "CURRENT_DOWNLOAD_SMS_COUNT_SUFFIX";
     private static final String PRODUCT_EXISTS_SUFFIX = "_PRODUCT_EXISTS";
     private static final String TEST_MODE = APP_PREFIX + "TEST_MODE";
+    private static final String CANCELLABLE_PRODUCTS = APP_PREFIX + "CANCELLABLE_PRODUCTS";
+    private static final String PRODUCT_CANCELLED = APP_PREFIX + "PRODUCT_CANCELLED";
 
     static void setRequiredSmsCountForProduct(Context context, VappProduct product, int count) {
         String key = getKeyForProduct(product, REQUIRED_SMS_COUNT_SUFFIX);
@@ -41,6 +43,16 @@ abstract class VappConfiguration {
     static int getCurrentDownloadSmsCountForProduct(Context context, VappProduct product) {
         String key = getKeyForProduct(product, CURRENT_DOWNLOAD_SMS_COUNT_SUFFIX);
         return getSharedPrefs(context).getInt(key, 0);
+    }
+
+    static void setProductCancelled(Context context, String productId, boolean cancelled) {
+        String key = getKeyForProduct(productId, PRODUCT_CANCELLED);
+        getSharedPrefsEditor(context).putBoolean(key, cancelled).apply();
+    }
+
+    static boolean isProductCancelled(Context context, String productId) {
+        String key = getKeyForProduct(productId, PRODUCT_CANCELLED);
+        return getSharedPrefs(context).getBoolean(key, false);
     }
 
     static void setSentSmsCountForProduct(Context context, VappProduct product, int count) {
@@ -81,6 +93,14 @@ abstract class VappConfiguration {
         return getSharedPrefs(context).getBoolean(TEST_MODE, false);
     }
 
+    static void setCancellableProducts(Context context, boolean mode) {
+        getSharedPrefsEditor(context).putBoolean(CANCELLABLE_PRODUCTS, mode).apply();
+    }
+
+    static boolean isCancellableProducts(Context context) {
+        return getSharedPrefs(context).getBoolean(CANCELLABLE_PRODUCTS, true);
+    }
+
     /**
      * Prune all previously existing product keys that aren't in the list by setting EXISTS to false
      * @param context the context
@@ -116,6 +136,10 @@ abstract class VappConfiguration {
     }
 
     private static String getKeyForProduct(VappProduct product, String suffix) {
-        return APP_PREFIX + product.getProductId() + suffix;
+        return getKeyForProduct(product.getProductId(), suffix);
+    }
+
+    private static String getKeyForProduct(String productId, String suffix) {
+        return APP_PREFIX + productId + suffix;
     }
 }

@@ -18,6 +18,14 @@ import com.vasilitate.vapp.R;
 
 import java.util.Stack;
 
+import static com.vasilitate.vapp.sdk.VappActions.ACTION_SMS_PROGRESS;
+import static com.vasilitate.vapp.sdk.VappActions.EXTRA_ERROR_MESSAGE;
+import static com.vasilitate.vapp.sdk.VappActions.EXTRA_PRODUCT_ID;
+import static com.vasilitate.vapp.sdk.VappActions.EXTRA_PROGRESS_PERCENTAGE;
+import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_CANCELLED;
+import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_COMPLETED;
+import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_SENT_COUNT;
+
 /**
  * Handles the sending of SMSs in the background
  */
@@ -25,6 +33,7 @@ public class VappSmsService extends Service {
 
     private static final String INTENT_SMS_SENT = "com.vasilitate.vapp.sdk.SMS_SENT";
     private static final String INTENT_SMS_DELIVERED = "com.vasilitate.vapp.sdk.INTENT_SMS_DELIVERED";
+    static final String INTENT_CANCEL_PAYMENT = "com.vasilitate.vapp.sdk.INTENT_CANCEL_PAYMENT";
 
     private static final int SENT_SMS_REQUEST_CODE = 100;
     private static final int DELIVERED_SMS_REQUEST_CODE = 101;
@@ -46,6 +55,7 @@ public class VappSmsService extends Service {
     private boolean testMode = false;
 
     private Handler completionHandler = new Handler();
+    private CountDownTimer countDownTimer;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -61,15 +71,16 @@ public class VappSmsService extends Service {
         smsDeliveredReceiver = new SmsDeliveredReceiver();
 
         registerReceiver(smsDeliveredReceiver, new IntentFilter(INTENT_SMS_DELIVERED));
-
+        registerReceiver(cancelPaymentReceiver, new IntentFilter(INTENT_CANCEL_PAYMENT));
 
         testMode = VappConfiguration.isTestMode(this);
 
-        String productId = intent.getStringExtra(VappActions.EXTRA_PRODUCT_ID);
+        String productId = intent.getStringExtra(EXTRA_PRODUCT_ID);
         currentProduct = Vapp.getProduct(productId);
 
         if( currentProduct != null ) {
             currentSmsIndex = Vapp.getSMSPaymentProgress(this, currentProduct);
+            VappConfiguration.setProductCancelled(getApplicationContext(), productId, false);
 
             initialiseSendIntervals();
 
@@ -85,9 +96,9 @@ public class VappSmsService extends Service {
     private void initialiseSendIntervals() {
 
         totalSMSCount = VappConfiguration.getCurrentDownloadSmsCountForProduct(VappSmsService.this,
-                currentProduct);
+                                                                               currentProduct);
         int sentCount = VappConfiguration.getSentSmsCountForProduct(VappSmsService.this,
-                currentProduct);
+                                                                    currentProduct);
 
         sendIntervals = new Stack<>();
         secondsRemaining = 0;
@@ -111,6 +122,11 @@ public class VappSmsService extends Service {
             unregisterReceiver(smsDeliveredReceiver);
             smsDeliveredReceiver = null;
         }
+
+        if (cancelPaymentReceiver != null) {
+            unregisterReceiver(cancelPaymentReceiver);
+        }
+
         super.onDestroy();
     }
 
@@ -152,8 +168,9 @@ public class VappSmsService extends Service {
 
         if( interval == 0 ) {
             sendSMS();
-        } else {
-            CountDownTimer timer = new CountDownTimer(currentInterval * 1000, 200) {
+        }
+        else {
+            countDownTimer = new CountDownTimer(currentInterval * 1000, 200) {
 
                 private int lastProgressPercentage = -1;
 
@@ -178,7 +195,7 @@ public class VappSmsService extends Service {
                     sendSMS();
                 }
             };
-            timer.start();
+            countDownTimer.start();
         }
     }
 
@@ -212,28 +229,35 @@ public class VappSmsService extends Service {
 
     private void broadcastProgress(int smsSentCount, int progressPercentage ) {
 
-        Intent intent = new Intent(VappActions.ACTION_SMS_PROGRESS);
-        intent.putExtra(VappActions.EXTRA_SMS_SENT_COUNT, smsSentCount);
-        intent.putExtra(VappActions.EXTRA_PROGRESS_PERCENTAGE, progressPercentage);
+        Intent intent = new Intent(ACTION_SMS_PROGRESS);
+        intent.putExtra(EXTRA_SMS_SENT_COUNT, smsSentCount);
+        intent.putExtra(EXTRA_PROGRESS_PERCENTAGE, progressPercentage);
 
         sendBroadcast(intent);
     }
 
     private void broadcastProgressPercentage(int progressPercentage) {
-        Intent intent = new Intent(VappActions.ACTION_SMS_PROGRESS);
-        intent.putExtra(VappActions.EXTRA_PROGRESS_PERCENTAGE, progressPercentage);
+        Intent intent = new Intent(ACTION_SMS_PROGRESS);
+        intent.putExtra(EXTRA_PROGRESS_PERCENTAGE, progressPercentage);
         sendBroadcast(intent);
     }
 
     private void broadcastSMSError(String error) {
-        Intent intent = new Intent(VappActions.ACTION_SMS_PROGRESS);
-        intent.putExtra(VappActions.EXTRA_ERROR_MESSAGE, error);
+        Intent intent = new Intent(ACTION_SMS_PROGRESS);
+        intent.putExtra(EXTRA_ERROR_MESSAGE, error);
+        sendBroadcast(intent);
+    }
+
+    private void broadcastSMSCancelled(String productId) {
+        Intent intent = new Intent(ACTION_SMS_PROGRESS);
+        intent.putExtra(EXTRA_SMS_CANCELLED, true);
+        intent.putExtra(EXTRA_PRODUCT_ID, productId);
         sendBroadcast(intent);
     }
 
     private void broadcastSMSsCompleted() {
-        Intent intent = new Intent(VappActions.ACTION_SMS_PROGRESS);
-        intent.putExtra(VappActions.EXTRA_SMS_COMPLETED, true);
+        Intent intent = new Intent(ACTION_SMS_PROGRESS);
+        intent.putExtra(EXTRA_SMS_COMPLETED, true);
         sendBroadcast(intent);
 
         VappNotificationManager.post(VappSmsService.this);
@@ -327,4 +351,23 @@ public class VappSmsService extends Service {
             }
         }
     }
+
+    private final BroadcastReceiver cancelPaymentReceiver = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            Log.d("Vapp", "Cancelling payment");
+
+            if (countDownTimer != null) {
+                countDownTimer.cancel();
+            }
+
+            if (currentProduct != null) {
+                String productId = currentProduct.getProductId();
+                VappConfiguration.setProductCancelled(context, productId, true);
+                broadcastSMSCancelled(productId);
+                currentProduct = null;
+                stopSelf();
+            }
+        }
+    };
+
 }

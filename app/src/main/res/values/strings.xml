@@ -12,6 +12,7 @@
     <string name="vapp_sms_delivery_failure">SMS Delivery Failed.  Please try again later.</string>
     <string name="notification_completed_title">VAPP! Payment Complete</string>
     <string name="notification_completed_message">Purchase has been successful!</string>
+    <string name="cancelled_purchase">Product Payment Cancelled!</string>
 
     <!--<string-array name="billing_route_A">-->
         <!--<item>23403</item>-->
