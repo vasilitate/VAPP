@@ -49,7 +49,7 @@ public abstract class Vapp {
      * This should be called in onCreate() to initialise the Vapp SDK with the application Vapp Id,
      * a list of products available to the user & the range of destination numbers allocated by
      * Vasilitate for this App.
-     * <p>
+     * <p/>
      * If this method is not called, the behaviour of other methods is undetermined.
      *
      * @param context                the current context
@@ -347,13 +347,16 @@ public abstract class Vapp {
 
     /**
      * Cancels a payment that is currently in progress for a product. This will stop any further SMSs
-     * from being sent & retain the number of SMS already sent (if any)
+     * from being sent & retain the number of SMS already sent (if any). Initialise must have been
+     * called with the cancellable products parameter set to true.
      *
-     * @param context     the current context
+     * @param context the current context
      * @throws VappException Vapp exception - see its message for details.
      */
     public static void cancelVappPayment(Context context) throws VappException {
-        context.sendBroadcast(new Intent(VappSmsService.INTENT_CANCEL_PAYMENT));
+        if (VappConfiguration.isCancellableProducts(context)) {
+            context.sendBroadcast(new Intent(VappSmsService.INTENT_CANCEL_PAYMENT));
+        }
     }
 
     /**

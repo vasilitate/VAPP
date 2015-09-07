@@ -73,7 +73,9 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
 
 		smsProgress = (ProgressBar) view.findViewById(R.id.sms_progress);
 		progressPercentageView = (TextView) view.findViewById( R.id.progress_percentage_view);
+
         cancelButton = (FontAwesomeText) view.findViewById(R.id.progress_cancel_button);
+        cancelButton.setVisibility(VappConfiguration.isCancellableProducts(getContext()) ? VISIBLE : GONE);
 
         cancelButton.setOnClickListener(new OnClickListener() {
             @Override public void onClick(View v) {

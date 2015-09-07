@@ -9,6 +9,11 @@ import android.widget.TextView;
 import com.beardedhen.androidbootstrap.FontAwesomeText;
 import com.vasilitate.vapp.R;
 
+import static android.view.View.GONE;
+import static android.view.View.INVISIBLE;
+import static android.view.View.OnClickListener;
+import static android.view.View.VISIBLE;
+
 /**
  * Displays the progress of SMS sending to the user.
  */
@@ -39,8 +44,9 @@ public class VappProgressActivity extends Activity implements VappProgressListen
         percentageView = (TextView) findViewById( R.id.percentage_view );
         progressBar = findViewById(R.id.vapp_progress_bar);
         cancelButton = (FontAwesomeText) findViewById(R.id.progress_cancel_button);
+        cancelButton.setVisibility(VappConfiguration.isCancellableProducts(this) ? VISIBLE : GONE);
 
-        cancelButton.setOnClickListener(new View.OnClickListener() {
+        cancelButton.setOnClickListener(new OnClickListener() {
             @Override public void onClick(View v) {
                 Vapp.cancelVappPayment(getApplicationContext());
             }
@@ -105,8 +111,8 @@ public class VappProgressActivity extends Activity implements VappProgressListen
 
     private void closeActivityAfterDelay(long delay) {
 
-        progressBar.setVisibility( View.INVISIBLE );
-        percentageView.setVisibility(View.INVISIBLE);
+        progressBar.setVisibility( INVISIBLE );
+        percentageView.setVisibility(INVISIBLE);
 
         // Just delay the closing of the screen so that user can see the completion
         // of the down count..
@@ -146,7 +152,7 @@ public class VappProgressActivity extends Activity implements VappProgressListen
     }
 
     @Override public void onCompletion() {
-        progressBar.setVisibility( View.INVISIBLE );
+        progressBar.setVisibility( INVISIBLE );
 
         // Just delay the closing of the screen so that user can see the completion
         // of the down count..

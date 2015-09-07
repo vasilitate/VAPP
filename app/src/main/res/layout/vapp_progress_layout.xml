@@ -15,27 +15,33 @@
         android:layout_width="match_parent"
         android:layout_height="10dp"
         android:layout_centerVertical="true"
-        android:layout_toLeftOf="@+id/progress_percentage_view"
+        android:layout_toLeftOf="@+id/progress_text_container"
         android:gravity="center_vertical"
         />
 
-    <TextView
-        android:id="@+id/progress_percentage_view"
-        android:layout_width="50dp"
+    <LinearLayout
+        android:id="@+id/progress_text_container"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_toLeftOf="@+id/progress_cancel_button"
-        android:gravity="center"
-        android:textSize="18sp"
-        tools:text="53%"
-        />
-
-    <com.beardedhen.androidbootstrap.FontAwesomeText
-        android:id="@+id/progress_cancel_button"
-        style="@style/cancel_purchase"
+        android:orientation="horizontal"
         android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        app:fa_icon="fa-close"
-        />
+        >
+
+        <TextView
+            android:id="@+id/progress_percentage_view"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:gravity="center"
+            android:textSize="18sp"
+            tools:text="53%"
+            />
+
+        <com.beardedhen.androidbootstrap.FontAwesomeText
+            android:id="@+id/progress_cancel_button"
+            style="@style/cancel_purchase"
+            app:fa_icon="fa-close"
+            />
+    </LinearLayout>
 
 </RelativeLayout>
