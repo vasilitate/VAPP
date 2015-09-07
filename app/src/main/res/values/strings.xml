@@ -13,6 +13,9 @@
     <string name="notification_completed_title">VAPP! Payment Complete</string>
     <string name="notification_completed_message">Purchase has been successful!</string>
     <string name="cancelled_purchase">Product Payment Cancelled!</string>
+    <string name="cancel_payment_message">No further SMS will be sent</string>
+    <string name="cancel_payment_title">Cancel Product?</string>
+    <string name="cancelled_product_purchase">Cancelled product purchase</string>
 
     <!--<string-array name="billing_route_A">-->
         <!--<item>23403</item>-->

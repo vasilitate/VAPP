@@ -48,7 +48,7 @@ public class VappProgressActivity extends Activity implements VappProgressListen
 
         cancelButton.setOnClickListener(new OnClickListener() {
             @Override public void onClick(View v) {
-                Vapp.cancelVappPayment(getApplicationContext());
+                Vapp.cancelVappPayment(VappProgressActivity.this);
             }
         });
 
@@ -148,7 +148,7 @@ public class VappProgressActivity extends Activity implements VappProgressListen
     }
 
     @Override public void onCancelled() {
-        Vapp.showErrorMessage(this, getString(R.string.cancelled_purchase));
+        finish();
     }
 
     @Override public void onCompletion() {

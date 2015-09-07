@@ -230,7 +230,6 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
     @Override public void onCancelled() {
         setVisibility(GONE);
         Context context = getContext();
-        Vapp.showErrorMessage(context, context.getString(R.string.cancelled_purchase));
     }
 
 }
