@@ -274,6 +274,19 @@ public abstract class Vapp {
     }
 
     /**
+     * Checks if the product is in the process of being paid for
+     *
+     * @param context the current context
+     * @param product the product
+     * @return the number products fully purchased.
+     * @throws VappException Vapp exception - see its message for details.
+     */
+    public static boolean isBeingPaidFor(Context context, VappProduct product) throws VappException {
+        checkIfInitialised();
+        return VappProductManager.isPaidFor(context, product) && !VappConfiguration.isProductCancelled(context, product.getProductId());
+    }
+
+    /**
      * Returns any product which is currently being purchases.   This function must be called
      * at started to allow for the resumption of any interrupted purchase.
      *
