@@ -7,18 +7,11 @@ You should copy this file to **/MyProject/app/aars/vapp.aar**. Your build.gradle
 so that it matches the code snippet below:
 
 ```
-apply plugin: 'com.android.application'
-
-android {
-    repositories { // make gradle search the app/aars directory for source sets
-        flatDir {
-            dirs 'aars'
-        }
-    }
+repositories {
+    maven { url "https://jitpack.io" } // use Jitpack repository
 }
-
 dependencies {
-    compile(name:'vapp', ext:'aar') // add VAPP! SDK as a dependency
+    compile 'com.github.vasilitate:VAPP:v0.2' // add VAPP! SDK as a dependency
 }
 ```
 
@@ -137,5 +130,15 @@ It is also possible to determine whether a product has been purchased using sync
 
 ```
 boolean hasPaid = Vapp.isPaidFor(context, MY_PRODUCT));
-boolean isPaying = Vapp.getSMSPaymentProgress(context, MY_PRODUCT) > 0
+boolean isPaying = Vapp.isBeingPaidFor(context, MY_PRODUCT);
+```
+
+### Cancelling Purchases ###
+By default purchases are cancellable by the user. After clicking the cancel icon on the default Payment screen,
+the user will be prompted to confirm the cancellation. If you wish to disable this behaviour, set the
+cancellableProducts flag to false during Vapp.initialise(). It is also possible to manually cancel
+a purchase with the following code (which will prompt the user):
+
+```
+Vapp.cancelVappPayment(context);
 ```
