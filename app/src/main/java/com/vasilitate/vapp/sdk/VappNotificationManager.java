@@ -27,7 +27,7 @@ final class VappNotificationManager {
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification notification = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.vapp_logo)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(context.getString(R.string.notification_completed_title))
                 .setContentText(context.getString(R.string.notification_completed_message))
                 .setContentIntent(contentIntent)
