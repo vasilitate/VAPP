@@ -18,14 +18,15 @@ public class TelephonyManagerTest extends AndroidTestCase {
     private boolean IS_ROAMING = false;
     private boolean HAS_SIM = true;
     private String TEST_IMEI = "35145120840121";
-    private static final String NUMBER_RANGE = "+447458730000";
+    private static final String NUMBER_RANGE = "+447458830000";
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
         List<VappProduct> productList = new ArrayList<>();
         productList.add(new VappProduct("ExtraLives", 10, 1));
-        Vapp.initialise(getContext(), "TestApp", productList,  new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true );
+        Vapp.initialise(getContext(), "TestApp", productList,  new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true, true );
+
     }
 
     public void testPreconditions() {

@@ -568,12 +568,32 @@ public abstract class Vapp {
 
             String[] mccMncs = context.getResources().getStringArray(mccMncArrayResId);
 
+            // format is mcc, mcc, ... / mnc, mnc,....
+
             for (String mccMnc : mccMncs) {
-                if (billingRouteMap.containsKey(mccMncs)) {
-                    throw new VappException("MCC/MNC combination is assigned to more than one billing route: " + mccMnc);
-                }
-                else {
-                    billingRouteMap.put(mccMnc, billingRoute);
+
+                String[] mccAndMnc = mccMnc.split( "/" );
+
+                if( mccAndMnc.length == 2 ) {
+
+                    String[] mccs = mccAndMnc[0].split(",");
+                    String[] mncs = mccAndMnc[1].split(",");
+
+                    if( mccs.length > 0 && mncs.length > 0 ) {
+
+                        for( String mcc : mccs ) {
+                            for( String mnc : mncs ) {
+
+                                String combination = mcc.trim() + "/" + mnc.trim();
+                                if (billingRouteMap.containsKey(combination)) {
+                                    throw new VappException("MCC/MNC combination is assigned to more than one billing route: " + combination);
+                                }
+                                else {
+                                    billingRouteMap.put(combination, billingRoute);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

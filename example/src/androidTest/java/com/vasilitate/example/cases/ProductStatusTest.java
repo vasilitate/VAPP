@@ -14,7 +14,7 @@ public class ProductStatusTest extends AndroidTestCase {
 
     private static final String APP_NAME = "VappTest";
     private static final VappProduct PRODUCT_LIVES = new VappProduct("productLives", 5, 90);
-    private static final String NUMBER_RANGE = "+447458730000";
+    private static final String NUMBER_RANGE = "+447458830000";
 
     @Override public void setUp() throws Exception {
         super.setUp();
@@ -22,8 +22,12 @@ public class ProductStatusTest extends AndroidTestCase {
         List<VappProduct> productList = new ArrayList<>();
         productList.add(PRODUCT_LIVES);
 
-        Vapp.initialise(getContext(), APP_NAME, productList, new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true );
-    }
+        Vapp.initialise(getContext(),
+                APP_NAME,
+                productList,
+                new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
+                true,
+                true );    }
 
     @Override protected void tearDown() throws Exception {
         super.tearDown();

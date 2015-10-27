@@ -17,7 +17,7 @@ public class PaymentProgressTest extends AndroidTestCase {
     private static final String APP_NAME = "VappTest";
     private static final VappProduct PRODUCT_LIVES = new VappProduct("productLives", 10, 1);
     private static final VappProduct PRODUCT_UNREIGSTERED = new VappProduct("unreistered", 10, 1);
-    private static final String NUMBER_RANGE = "+447458730000";
+    private static final String NUMBER_RANGE = "+447458830000";
 
     @Override public void setUp() throws Exception {
         super.setUp();
@@ -25,7 +25,12 @@ public class PaymentProgressTest extends AndroidTestCase {
         List<VappProduct> productList = new ArrayList<>();
         productList.add(PRODUCT_LIVES);
 
-        Vapp.initialise(getContext(), APP_NAME, productList, new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true );
+        Vapp.initialise(getContext(),
+                APP_NAME,
+                productList,
+                new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
+                true,
+                true );
     }
 
     @Override protected void tearDown() throws Exception {
