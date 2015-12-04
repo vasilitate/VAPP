@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+       If set to true, the SMS and Telemetry calls will be mocked
+       -->
+    <bool name="vapp_mocking">false</bool>
+</resources>

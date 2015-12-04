@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  
+    <dimen name="vapp_logo_height">250dp</dimen>
+    <dimen name="vapp_logo_width">250dp</dimen>
+    <dimen name="vasilitate_logo_height">256dp</dimen>
+    <dimen name="vasilitate_logo_width">640dp</dimen>
+
+</resources>

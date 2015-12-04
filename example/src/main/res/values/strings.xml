@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">VAPP! Example</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="vapp_example_app_prompt">Vapp! Example App</string>
+
+    <string name="buy_commander_rank_button">Upgrade to Commander</string>
+    <string name="buy_more_lives_button">Buy More Lives</string>
+</resources>
