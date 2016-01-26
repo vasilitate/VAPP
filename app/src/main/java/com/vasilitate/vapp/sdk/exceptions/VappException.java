@@ -8,5 +8,8 @@ public class VappException extends RuntimeException {
     public VappException(String detailMessage) {
         super(detailMessage);
     }
-    
+
+    public VappException(String detailMessage, Throwable throwable) {
+        super(detailMessage, throwable);
+    }
 }

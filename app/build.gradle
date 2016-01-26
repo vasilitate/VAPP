@@ -27,4 +27,6 @@ dependencies {
     compile 'com.android.support:appcompat-v7:22.2.1'
     compile 'com.android.support:support-v4:22.2.1'
     compile 'com.beardedhen:androidbootstrap:1.2.3'
+    testCompile 'junit:junit:4.12'
+    compile 'com.google.code.gson:gson:2.5'
 }
