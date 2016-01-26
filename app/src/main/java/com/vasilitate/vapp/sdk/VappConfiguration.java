@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * VAPP Shared Preferences.
- *
+ * <p/>
  * The class has package level scope but is abstract to prevent it being instantiated.
  */
 abstract class VappConfiguration {
@@ -21,6 +21,7 @@ abstract class VappConfiguration {
     private static final String REQUIRED_SMS_COUNT_SUFFIX = "REQUIRED_SMS_COUNT";
     private static final String CURRENT_DOWNLOAD_SMS_COUNT_SUFFIX = "CURRENT_DOWNLOAD_SMS_COUNT_SUFFIX";
     private static final String PRODUCT_EXISTS_SUFFIX = "_PRODUCT_EXISTS";
+    private static final String SDK_KEY = "SDK_KEY";
     private static final String TEST_MODE = APP_PREFIX + "TEST_MODE";
     private static final String CANCELLABLE_PRODUCTS = APP_PREFIX + "CANCELLABLE_PRODUCTS";
     private static final String PRODUCT_CANCELLED = APP_PREFIX + "PRODUCT_CANCELLED";
@@ -103,7 +104,8 @@ abstract class VappConfiguration {
 
     /**
      * Prune all previously existing product keys that aren't in the list by setting EXISTS to false
-     * @param context the context
+     *
+     * @param context     the context
      * @param productList the list of initialised products
      */
     static void pruneMissingProducts(Context context, List<VappProduct> productList) {
@@ -126,6 +128,27 @@ abstract class VappConfiguration {
             }
         }
     }
+
+    /**
+     * Persists the SDK key
+     *
+     * @param context the current context
+     * @param sdkKey  the sdk key to store
+     */
+    static void setSdkKey(Context context, String sdkKey) {
+        getSharedPrefsEditor(context).putString(SDK_KEY, sdkKey).apply();
+    }
+
+    /**
+     * Retrieves the SDK key
+     *
+     * @param context the current context
+     * @return the stored sdk key
+     */
+    static String getSdkKey(Context context) {
+        return getSharedPrefs(context).getString(SDK_KEY, null);
+    }
+
 
     private static SharedPreferences.Editor getSharedPrefsEditor(Context context) {
         return getSharedPrefs(context).edit();

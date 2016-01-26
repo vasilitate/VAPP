@@ -16,6 +16,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.vasilitate.vapp.R;
+import com.vasilitate.vapp.sdk.network.VappRestClient;
 
 import java.util.Stack;
 
@@ -44,6 +45,7 @@ public class VappSmsService extends Service {
 
     private SmsSentReceiver smsSentReceiver;
     private SmsDeliveredReceiver smsDeliveredReceiver;
+    private CancelPaymentReceiver cancelPaymentReceiver;
 
     private PendingIntent sentPI;
     private PendingIntent deliveredPI;
@@ -57,24 +59,48 @@ public class VappSmsService extends Service {
 
     private Handler completionHandler = new Handler();
     private CountDownTimer countDownTimer;
+    private VappRestClient restClient;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         sentPI = PendingIntent.getBroadcast(this, SENT_SMS_REQUEST_CODE,
-                                            new Intent(INTENT_SMS_DELIVERED), 0);
+                new Intent(INTENT_SMS_DELIVERED), 0);
         deliveredPI = PendingIntent.getBroadcast(this, DELIVERED_SMS_REQUEST_CODE,
-                                                 new Intent(INTENT_SMS_SENT), 0);
+                new Intent(INTENT_SMS_SENT), 0);
 
-        smsSentReceiver = new SmsSentReceiver();
-        registerReceiver(smsSentReceiver, new IntentFilter(INTENT_SMS_SENT));
+        restClient = new VappRestClient(getString(R.string.api_endpoint), VappConfiguration.getSdkKey(this));
 
-        smsDeliveredReceiver = new SmsDeliveredReceiver();
-
-        registerReceiver(smsDeliveredReceiver, new IntentFilter(INTENT_SMS_DELIVERED));
-        registerReceiver(cancelPaymentReceiver, new IntentFilter(INTENT_CANCEL_PAYMENT));
-
+        setupReceivers();
         testMode = VappConfiguration.isTestMode(this);
 
+        handleStartCommand(intent);
+
+
+        return START_STICKY;
+    }
+
+    @Nullable @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    private void setupReceivers() {
+        smsSentReceiver = new SmsSentReceiver();
+        smsDeliveredReceiver = new SmsDeliveredReceiver();
+        cancelPaymentReceiver = new CancelPaymentReceiver();
+
+        registerReceiver(smsSentReceiver, new IntentFilter(INTENT_SMS_SENT));
+        registerReceiver(smsDeliveredReceiver, new IntentFilter(INTENT_SMS_DELIVERED));
+        registerReceiver(cancelPaymentReceiver, new IntentFilter(INTENT_CANCEL_PAYMENT));
+    }
+
+    /**
+     * Handles the start command intent, and kicks off SMS sending (or terminates the service if
+     * parameters are invalid)
+     *
+     * @param intent the start command intent
+     */
+    private void handleStartCommand(Intent intent) {
         String productId = intent.getStringExtra(EXTRA_PRODUCT_ID);
         currentProduct = Vapp.getProduct(productId);
 
@@ -83,22 +109,19 @@ public class VappSmsService extends Service {
             VappConfiguration.setProductCancelled(getApplicationContext(), productId, false);
 
             initialiseSendIntervals();
-
             sendNextSMSForCurrentProduct();
         }
         else { // Unrecognised Product!
             terminateService();
         }
-
-        return START_STICKY;
     }
 
     private void initialiseSendIntervals() {
 
         totalSMSCount = VappConfiguration.getCurrentDownloadSmsCountForProduct(VappSmsService.this,
-                                                                               currentProduct);
+                currentProduct);
         int sentCount = VappConfiguration.getSentSmsCountForProduct(VappSmsService.this,
-                                                                    currentProduct);
+                currentProduct);
 
         sendIntervals = new Stack<>();
         secondsRemaining = 0;
@@ -112,21 +135,17 @@ public class VappSmsService extends Service {
 
     @Override
     public void onDestroy() {
-
         if (smsSentReceiver != null) {
             unregisterReceiver(smsSentReceiver);
             smsSentReceiver = null;
         }
-
         if (smsDeliveredReceiver != null) {
             unregisterReceiver(smsDeliveredReceiver);
             smsDeliveredReceiver = null;
         }
-
         if (cancelPaymentReceiver != null) {
             unregisterReceiver(cancelPaymentReceiver);
         }
-
         super.onDestroy();
     }
 
@@ -135,14 +154,11 @@ public class VappSmsService extends Service {
         stopSelf();
     }
 
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
+
+    /** Handle SMS **/
+
 
     private void sendNextSMSForCurrentProduct() {
-
         // Ensure there are still SMSs to send.  If not (e.g. after a re-start?) mark the
         // current product as bought...
         if (sendIntervals.size() == 0) {
@@ -156,14 +172,12 @@ public class VappSmsService extends Service {
         }
 
         final int currentInterval = interval;
-
         int progressPercentage = (durationInSeconds - secondsRemaining) * 100 / durationInSeconds;
-
         broadcastProgress(currentSmsIndex, progressPercentage);
 
         if (testMode) {
             Log.d("VAPP!", String.format("Sending Mock SMS %d/%d",
-                                         currentSmsIndex, currentProduct.getRequiredSmsCount()));
+                    currentSmsIndex, currentProduct.getRequiredSmsCount()));
         }
 
         if (interval == 0) {
@@ -171,7 +185,6 @@ public class VappSmsService extends Service {
         }
         else {
             countDownTimer = new CountDownTimer(currentInterval * 1000, 200) {
-
                 private int lastProgressPercentage = -1;
 
                 @Override
@@ -183,7 +196,6 @@ public class VappSmsService extends Service {
                     int progressPercentage = (durationInSeconds - remainingCount) * 100 / durationInSeconds;
 
                     if (lastProgressPercentage != progressPercentage) {
-
                         broadcastProgressPercentage(progressPercentage);
                         lastProgressPercentage = progressPercentage;
                     }
@@ -199,41 +211,77 @@ public class VappSmsService extends Service {
         }
     }
 
+    /**
+     * Sends off a queued SMS.
+     */
     private void sendSMS() {
         try {
             String smsPhoneNumber =
                     VappProductManager.getRandomNumberInRange(Vapp.getDestinationNumberRange());
             String smsMessage = Vapp.getGeneratedSmsForProduct(VappSmsService.this,
-                                                               currentProduct,
-                                                               totalSMSCount,
-                                                               currentSmsIndex);
-            if (testMode) {
+                    currentProduct,
+                    totalSMSCount,
+                    currentSmsIndex);
 
+            if (testMode) {
                 Log.d("Vapp!", "Test SMS: " + smsPhoneNumber + ": " + smsMessage);
                 processSentSMS();
             }
             else {
                 SmsManager sms = SmsManager.getDefault();
                 sms.sendTextMessage(smsPhoneNumber,
-                                    null,           // Call center number.
-                                    smsMessage,
-                                    sentPI,
-                                    deliveredPI);
+                        null,           // Call center number.
+                        smsMessage,
+                        sentPI,
+                        deliveredPI);
             }
-
-
         }
         catch (Exception e) {
             broadcastSMSError(e.getMessage());
         }
     }
+    private void processSentSMS() {
+
+        // The SMS has been delivered so move onto the next one (if
+        // we have not reached the end).
+        if (currentProduct != null) {
+
+            // Move onto the next message...
+            currentSmsIndex++;
+
+            if (sendIntervals.size() > 0) { // Store the progress...
+                VappConfiguration.setSentSmsCountForProduct(VappSmsService.this,
+                        currentProduct,
+                        currentSmsIndex);
+
+                // Now initiate the sending of the next SMS...
+                sendNextSMSForCurrentProduct();
+            }
+            else {
+                // All SMSs have been sent for the current product, update the redeemed count...
+                Vapp.addRedeemedProduct(VappSmsService.this, currentProduct);
+
+                // Send a final progress update showing completion.
+                broadcastProgress(currentProduct.getRequiredSmsCount(), 100);
+
+                // Delay the sending of the completion so that any clients can display
+                // the completion of the purchase.
+                completionHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        terminateService();
+                    }
+                }, 2000);
+            }
+        }
+    }
+
+    /** Handle broadcast **/
 
     private void broadcastProgress(int smsSentCount, int progressPercentage) {
-
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
         intent.putExtra(EXTRA_SMS_SENT_COUNT, smsSentCount);
         intent.putExtra(EXTRA_PROGRESS_PERCENTAGE, progressPercentage);
-
         sendBroadcast(intent);
     }
 
@@ -260,13 +308,30 @@ public class VappSmsService extends Service {
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
         intent.putExtra(EXTRA_SMS_COMPLETED, true);
         sendBroadcast(intent);
-
         VappNotificationManager.post(VappSmsService.this);
+    }
+
+    private class CancelPaymentReceiver extends BroadcastReceiver {
+        @Override public void onReceive(Context context, Intent intent) {
+            Log.d("Vapp", "Cancelling payment");
+
+            if (countDownTimer != null) {
+                countDownTimer.cancel();
+            }
+            if (currentProduct != null) {
+                String productId = currentProduct.getProductId();
+                VappConfiguration.setProductCancelled(context, productId, true);
+                broadcastSMSCancelled(productId);
+                Toast.makeText(context, R.string.cancelled_product_purchase, Toast.LENGTH_LONG).show();
+                currentProduct = null;
+                stopSelf();
+            }
+        }
     }
 
     private class SmsSentReceiver extends BroadcastReceiver {
         @Override
-        public void onReceive(Context context, Intent arg1) {
+        public void onReceive(Context context, Intent intent) {
 
             Integer errorResId = null;
             switch (getResultCode()) {
@@ -287,7 +352,6 @@ public class VappSmsService extends Service {
                     errorResId = R.string.vapp_sms_sent_failure_radio_off;
                     break;
             }
-
             if (errorResId != null) {
                 broadcastSMSError(getString(errorResId));
             }
@@ -298,12 +362,9 @@ public class VappSmsService extends Service {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-
             switch (getResultCode()) {
-
                 case Activity.RESULT_OK:
                     processSentSMS();
-
                     break;
                 case Activity.RESULT_CANCELED:
                     broadcastSMSError(getString(R.string.vapp_sms_delivery_failure));
@@ -311,65 +372,5 @@ public class VappSmsService extends Service {
             }
         }
     }
-
-    private void processSentSMS() {
-
-        // The SMS has been delivered so move onto the next one (if
-        // we have not reached the end).
-        if (currentProduct != null) {
-
-            // Move onto the next message...
-            currentSmsIndex++;
-
-            if (sendIntervals.size() > 0) {
-
-                // Store the progress...
-                VappConfiguration.setSentSmsCountForProduct(VappSmsService.this,
-                                                            currentProduct,
-                                                            currentSmsIndex);
-
-                // Now initiate the sending of the next SMS...
-                sendNextSMSForCurrentProduct();
-
-            }
-            else {
-
-                // All SMSs have been sent for the current product, update the redeemed count...
-                Vapp.addRedeemedProduct(VappSmsService.this, currentProduct);
-
-                // Send a final progress update showing completion.
-                broadcastProgress(currentProduct.getRequiredSmsCount(), 100);
-
-                // Delay the sending of the completion so that any clients can display
-                // the completion of the purchase.
-                completionHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-
-                        terminateService();
-                    }
-                }, 2000);
-            }
-        }
-    }
-
-    private final BroadcastReceiver cancelPaymentReceiver = new BroadcastReceiver() {
-        @Override public void onReceive(Context context, Intent intent) {
-            Log.d("Vapp", "Cancelling payment");
-
-            if (countDownTimer != null) {
-                countDownTimer.cancel();
-            }
-
-            if (currentProduct != null) {
-                String productId = currentProduct.getProductId();
-                VappConfiguration.setProductCancelled(context, productId, true);
-                broadcastSMSCancelled(productId);
-                Toast.makeText(context, R.string.cancelled_product_purchase, Toast.LENGTH_LONG).show();
-                currentProduct = null;
-                stopSelf();
-            }
-        }
-    };
 
 }

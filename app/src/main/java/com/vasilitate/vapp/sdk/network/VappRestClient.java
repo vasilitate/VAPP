@@ -21,6 +21,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
+/**
+ * A REST client which implements calls to the Vapp API.
+ */
 public class VappRestClient implements VappRestApi {
 
     @StringDef({HTTP_GET, HTTP_POST})
@@ -32,7 +35,6 @@ public class VappRestClient implements VappRestApi {
     public static final String RESOURCE_HNI_STATUS = "/hnistatus";
     public static final String RESOURCE_RECEIVED_STATUS = "/receivedstatus";
     public static final String RESOURCE_LOGS = "/logs";
-
 
     private final String endpoint;
     private final String sdkKey;

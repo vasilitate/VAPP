@@ -49,7 +49,7 @@ public abstract class Vapp {
      * This should be called in onCreate() to initialise the Vapp SDK with the application Vapp Id,
      * a list of products available to the user & the range of destination numbers allocated by
      * Vasilitate for this App.
-     * <p>
+     * <p/>
      * If this method is not called, the behaviour of other methods is undetermined.
      *
      * @param context                the current context
@@ -58,6 +58,7 @@ public abstract class Vapp {
      * @param destinationNumberRange range of destination numbers allocated by Vasilitate your App.
      * @param testMode               false for default functionality, true to disable SMS sending for test purposes
      * @param cancellableProducts    true if users should be able to cancel product purchases (default), false if not
+     * @param sdkKey                 the sdk key provided for your application.
      * @throws InvalidApplicationVappIdException invalid application Vapp Id.
      * @throws InvalidProductIdException         invalid Product Id.
      * @throws InvalidVappNetworkException       invalid Vapp Network.
@@ -70,7 +71,8 @@ public abstract class Vapp {
                                                List<VappProduct> products,
                                                VappNumberRange destinationNumberRange,
                                                boolean testMode,
-                                               boolean cancellableProducts)
+                                               boolean cancellableProducts,
+                                               String sdkKey)
             throws InvalidSmsCountException, InvalidApplicationVappIdException,
             InvalidProductIdException, InvalidVappNetworkException, InvalidVappProductException,
             InvalidVappNumberException {
@@ -78,9 +80,13 @@ public abstract class Vapp {
         validateApplicationVappId(appVappId);
         Vapp.appVappId = appVappId;
 
+        if (TextUtils.isEmpty(sdkKey)) {
+            throw new VappException("Invalid value for SDK key - cannot be null!");
+        }
+
         VappConfiguration.setTestMode(context, testMode);
         VappConfiguration.setCancellableProducts(context, cancellableProducts);
-
+        VappConfiguration.setSdkKey(context, sdkKey);
         initialiseBillingRouteLookup(context);
 
         if (products == null || products.isEmpty()) {
@@ -88,26 +94,22 @@ public abstract class Vapp {
         }
 
         Vapp.productList = products;
-
         Map<String, Boolean> uniqueNames = new HashMap<>();
 
         for (VappProduct product : productList) { // validate before changing state
-
             validateProductId(product.getProductId());
             validateSMSCount(product);
-
             String name = product.getProductId();
+
             if (uniqueNames.get(name) != null) {
                 throw new InvalidVappProductException(String.format("Duplicate entry found for product %s", product.getProductId()));
             }
-
             uniqueNames.put(name, true);
         }
         VappProductManager.addProducts(context, productList); // persist state
 
         if (destinationNumberRange.getStartOfRange() >= MIN_RANGE_START
                 && destinationNumberRange.getEndOfRange() <= MAX_RANGE_START) {
-
             Vapp.destinationNumberRange = destinationNumberRange;
         }
         else {
@@ -449,13 +451,13 @@ public abstract class Vapp {
         String originatingNetworkName = getOriginatingNetworkName(context);
         String originatingNetworkCountry = getOriginatingNetworkCountry(context);
         return VappSmsGenerator.generateSms(appVappId,
-                                            product.getProductId(),
-                                            smsCount,
-                                            smsIndex,
-                                            imei,
-                                            isRoaming(context),
-                                            originatingNetworkName,
-                                            originatingNetworkCountry);
+                product.getProductId(),
+                smsCount,
+                smsIndex,
+                imei,
+                isRoaming(context),
+                originatingNetworkName,
+                originatingNetworkCountry);
     }
 
     static VappProduct getProduct(String productId) throws VappException {
@@ -572,17 +574,17 @@ public abstract class Vapp {
 
             for (String mccMnc : mccMncs) {
 
-                String[] mccAndMnc = mccMnc.split( "/" );
+                String[] mccAndMnc = mccMnc.split("/");
 
-                if( mccAndMnc.length == 2 ) {
+                if (mccAndMnc.length == 2) {
 
                     String[] mccs = mccAndMnc[0].split(",");
                     String[] mncs = mccAndMnc[1].split(",");
 
-                    if( mccs.length > 0 && mncs.length > 0 ) {
+                    if (mccs.length > 0 && mncs.length > 0) {
 
-                        for( String mcc : mccs ) {
-                            for( String mnc : mncs ) {
+                        for (String mcc : mccs) {
+                            for (String mnc : mncs) {
 
                                 String combination = mcc.trim() + "/" + mnc.trim();
                                 if (billingRouteMap.containsKey(combination)) {

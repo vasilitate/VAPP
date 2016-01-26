@@ -1,5 +1,6 @@
 <resources>
     <string name="vapp_progress_text_formatter">%1$d / %2$d</string>
+    <string name="api_endpoint">http://api.mobileyes.co.uk</string>
 
     <string name="vapp_not_available_error_no_sim">Unable to use VAPP! as your SIM cannot be detected</string>
     <string name="vapp_not_available_error_no_network">Unable to use VAPP! - no network found</string>
