@@ -9,26 +9,26 @@ import java.lang.annotation.RetentionPolicy;
 /**
  * The base response model which is returned from all API calls, consisting of a status & error
  */
-public class BaseResponse {
+public abstract class BaseResponse {
 
     @StringDef({HNI_STATUS_UNKNOWN, HNI_STATUS_WHITELISTED, HNI_STATUS_BLACKLISTED})
-    @Retention(RetentionPolicy.SOURCE) @interface HniStatus {
+    @Retention(RetentionPolicy.SOURCE) @interface RequestStatus {
     }
 
     public static final String HNI_STATUS_UNKNOWN = "unknown";
     public static final String HNI_STATUS_WHITELISTED = "whitelisted";
     public static final String HNI_STATUS_BLACKLISTED = "blacklisted";
 
-    @HniStatus @Nullable private final String status;
+    @RequestStatus @Nullable private final String status;
 
     @Nullable private final String error;
 
-    public BaseResponse(@HniStatus @Nullable String status, @Nullable String error) {
+    public BaseResponse(@RequestStatus @Nullable String status, @Nullable String error) {
         this.status = status;
         this.error = error;
     }
 
-    @HniStatus @Nullable public String getStatus() {
+    @RequestStatus @Nullable public String getStatus() {
         return status;
     }
 

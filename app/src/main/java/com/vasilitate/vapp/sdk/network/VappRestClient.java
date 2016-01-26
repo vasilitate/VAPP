@@ -1,7 +1,6 @@
 package com.vasilitate.vapp.sdk.network;
 
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.StringDef;
 import android.text.TextUtils;
 
@@ -10,6 +9,7 @@ import com.vasilitate.vapp.sdk.exceptions.VappApiException;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +30,9 @@ public class VappRestClient implements VappRestApi {
     public static final String HTTP_GET = "GET";
     public static final String HTTP_POST = "POST";
     public static final String RESOURCE_HNI_STATUS = "/hnistatus";
+    public static final String RESOURCE_RECEIVED_STATUS = "/receivedstatus";
+    public static final String RESOURCE_LOGS = "/logs";
+
 
     private final String endpoint;
     private final String sdkKey;
@@ -41,14 +44,10 @@ public class VappRestClient implements VappRestApi {
         gson = new Gson();
     }
 
-    @Nullable @Override
-    public BaseResponse getHniStatus(String mcc, String mnc) throws VappApiException {
-        if (TextUtils.isEmpty(mcc)) {
-            throw new VappApiException("MCC cannot be empty.");
-        }
-        if (TextUtils.isEmpty(mnc)) {
-            throw new VappApiException("MNC cannot be empty.");
-        }
+    @Override
+    public GetHniStatusResponse getHniStatus(String mcc, String mnc) throws VappApiException {
+        validateParameter(mcc, "mcc");
+        validateParameter(mnc, "mnc");
 
         String address = combinePaths(endpoint, RESOURCE_HNI_STATUS, mcc, mnc);
         URL url = getUrlForAddress(address);
@@ -60,18 +59,63 @@ public class VappRestClient implements VappRestApi {
             return null;
         }
         else {
-            return gson.fromJson(response, BaseResponse.class);
+            return gson.fromJson(response, GetHniStatusResponse.class);
+        }
+    }
+
+    private void validateParameter(String value, String paramName) {
+        if (TextUtils.isEmpty(value)) {
+            throw new VappApiException(String.format("Parameter '%s' cannot be empty.", paramName));
         }
     }
 
     @Override
-    public void postLog(String message, String ddi, String cli, String cliDetail) throws VappApiException {
+    public PostLogsResponse postLog(PostLogsBody logs) throws VappApiException {
+        if (logs == null || logs.getLogs().isEmpty()) {
+            throw new VappApiException("Cannot send empty logs to server!");
+        }
 
+        String address = combinePaths(endpoint, RESOURCE_LOGS);
+        URL url = getUrlForAddress(address);
+
+        HttpURLConnection connection = createHttpConnection(url, HTTP_POST);
+        String json = gson.toJson(logs);
+        String response = executeRequest(connection, json);
+
+        if (TextUtils.isEmpty(response)) {
+            return null;
+        }
+        else {
+            return gson.fromJson(response, PostLogsResponse.class);
+        }
     }
 
-    @Nullable @Override
-    public String getReceivedStatus(String cli, String ddi, String random2, String random3) throws VappApiException {
-        return null;
+    @Override
+    public GetReceivedStatusResponse getReceivedStatus(String cli, String ddi, String random2, String random3) throws VappApiException {
+        validateParameter(cli, "cli");
+        validateParameter(ddi, "ddi");
+        validateParameter(random2, "random2");
+        validateParameter(random3, "random3");
+
+        if (cli.startsWith(PostLogsBody.PLUS_SYMBOL)) {
+            cli = cli.replace(PostLogsBody.PLUS_SYMBOL, "");
+        }
+        if (ddi.startsWith(PostLogsBody.PLUS_SYMBOL)) {
+            ddi = ddi.replace(PostLogsBody.PLUS_SYMBOL, "");
+        }
+
+        String address = combinePaths(endpoint, RESOURCE_RECEIVED_STATUS, cli, ddi, random2, random3);
+        URL url = getUrlForAddress(address);
+
+        HttpURLConnection connection = createHttpConnection(url, HTTP_POST);
+        String response = executeRequest(connection);
+
+        if (TextUtils.isEmpty(response)) {
+            return null;
+        }
+        else {
+            return gson.fromJson(response, GetReceivedStatusResponse.class);
+        }
     }
 
 
@@ -81,7 +125,7 @@ public class VappRestClient implements VappRestApi {
 
 
     private HttpURLConnection createHttpConnection(URL url, @HTTPMethod String method) {
-        HttpURLConnection connection = null;
+        HttpURLConnection connection;
 
         try {
             connection = (HttpURLConnection) url.openConnection();
@@ -100,12 +144,22 @@ public class VappRestClient implements VappRestApi {
     }
 
     private String executeRequest(URLConnection connection) {
+        return executeRequest(connection, null);
+    }
+
+    private String executeRequest(URLConnection connection, String postBody) {
         InputStream is = null;
+        DataOutputStream os = null;
         BufferedReader reader;
         String response = null;
 
         try {
-            is = new BufferedInputStream(connection.getInputStream());
+            if (!TextUtils.isEmpty(postBody)) { // send the POST body
+                os = new DataOutputStream(connection.getOutputStream());
+                os.write(postBody.getBytes());
+            }
+
+            is = new BufferedInputStream(connection.getInputStream()); // read the HTTP response
             reader = new BufferedReader(new InputStreamReader(is));
 
             String line;
@@ -124,6 +178,14 @@ public class VappRestClient implements VappRestApi {
             if (is != null) {
                 try {
                     is.close();
+                }
+                catch (IOException e) {
+                    throw new VappApiException("Failed to close input stream", e);
+                }
+            }
+            if (os != null) {
+                try {
+                    os.close();
                 }
                 catch (IOException e) {
                     throw new VappApiException("Failed to close input stream", e);
