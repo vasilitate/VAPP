@@ -3,17 +3,17 @@ package com.vasilitate.example.cases;
 import android.test.AndroidTestCase;
 
 import com.vasilitate.vapp.sdk.exceptions.VappApiException;
-import com.vasilitate.vapp.sdk.network.GetHniStatusResponse;
-import com.vasilitate.vapp.sdk.network.GetReceivedStatusResponse;
-import com.vasilitate.vapp.sdk.network.PostLogsBody;
-import com.vasilitate.vapp.sdk.network.PostLogsResponse;
+import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
+import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
+import com.vasilitate.vapp.sdk.network.request.PostLogsBody;
+import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
 import com.vasilitate.vapp.sdk.network.VappRestClient;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.vasilitate.vapp.sdk.network.GetHniStatusResponse.HNI_STATUS_WHITELISTED;
-import static com.vasilitate.vapp.sdk.network.PostLogsBody.LogEntry;
+import static com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse.HNI_STATUS_WHITELISTED;
+import static com.vasilitate.vapp.sdk.network.request.PostLogsBody.LogEntry;
 
 public class RestTest extends AndroidTestCase {
 

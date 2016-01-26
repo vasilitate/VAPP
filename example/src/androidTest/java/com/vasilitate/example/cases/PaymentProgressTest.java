@@ -30,7 +30,8 @@ public class PaymentProgressTest extends AndroidTestCase {
                 productList,
                 new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                 true,
-                true );
+                true,
+                "BG8R4X2PCXYCHRCRJTK6");
     }
 
     @Override protected void tearDown() throws Exception {

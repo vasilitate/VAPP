@@ -1,4 +1,4 @@
-package com.vasilitate.vapp.sdk.network;
+package com.vasilitate.vapp.sdk.network.request;
 
 import android.text.TextUtils;
 

@@ -43,7 +43,7 @@ public class VappInitTest extends AndroidTestCase {
 
         for (String id : testData) {
             try {
-                Vapp.initialise(getContext(), id, productList, new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true, true );
+                Vapp.initialise(getContext(), id, productList, new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true, true, "BG8R4X2PCXYCHRCRJTK6");
                 fail(String.format("Invalid Vapp Id '%s' not rejected", id));
             }
             catch (InvalidApplicationVappIdException ignored) {
@@ -59,7 +59,7 @@ public class VappInitTest extends AndroidTestCase {
         productList.add(new VappProduct("ExtraLives", 10, 1));
 
         for (String id : testData) {
-            Vapp.initialise(getContext(), id, productList, new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true, true);
+            Vapp.initialise(getContext(), id, productList, new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true, true, "BG8R4X2PCXYCHRCRJTK6");
         }
     }
 
@@ -79,7 +79,7 @@ public class VappInitTest extends AndroidTestCase {
                         productList,
                         new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                         true,
-                        true );
+                        true, "BG8R4X2PCXYCHRCRJTK6");
                 fail(String.format("Failed to reject invalid SMS count '%d'", count));
             }
             catch (InvalidSmsCountException ignored) {
@@ -101,7 +101,7 @@ public class VappInitTest extends AndroidTestCase {
                     productList,
                     new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                     true,
-                    true );
+                    true, "BG8R4X2PCXYCHRCRJTK6");
         }
     }
 
@@ -133,7 +133,7 @@ public class VappInitTest extends AndroidTestCase {
                         productList,
                         new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                         true,
-                        true );
+                        true, "BG8R4X2PCXYCHRCRJTK6");
                 fail("Failed to reject initialisation with invalid product list " + productList);
             }
             catch (InvalidVappProductException ignored) {
@@ -158,7 +158,7 @@ public class VappInitTest extends AndroidTestCase {
                         productList,
                         new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                         true,
-                        true );
+                        true, "BG8R4X2PCXYCHRCRJTK6");
                 fail();
             }
             catch (InvalidProductIdException ignored) {
@@ -180,7 +180,8 @@ public class VappInitTest extends AndroidTestCase {
                     productList,
                     new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                     true,
-                    true );        }
+                    true, "BG8R4X2PCXYCHRCRJTK6");
+        }
     }
 
     public void testInvalidNumberRanges() {
@@ -206,7 +207,7 @@ public class VappInitTest extends AndroidTestCase {
                         productList,
                         numberRange,
                         true,
-                        true );
+                        true, "BG8R4X2PCXYCHRCRJTK6");
                 fail(String.format("Failed to reject invalid number range %s", numberRange));
             }
             catch (InvalidVappNumberException ignored) {
@@ -231,7 +232,7 @@ public class VappInitTest extends AndroidTestCase {
                     productList,
                     numberRange,
                     true,
-                    true );
+                    true, "BG8R4X2PCXYCHRCRJTK6");
         }
     }
 

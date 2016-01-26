@@ -3,6 +3,13 @@ package com.vasilitate.vapp.sdk.network;
 import android.app.PendingIntent;
 
 import com.vasilitate.vapp.sdk.exceptions.VappApiException;
+import com.vasilitate.vapp.sdk.network.request.PostLogsBody;
+import com.vasilitate.vapp.sdk.network.response.BaseResponse;
+import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
+import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
+import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
+
+import java.io.IOException;
 
 /**
  * Performs API calls to the Vapp backend
@@ -19,7 +26,7 @@ public interface VappRestApi {
      * @return a {@link GetHniStatusResponse}
      */
     GetHniStatusResponse getHniStatus(String mcc,
-                                      String mnc) throws VappApiException;
+                                      String mnc) throws VappApiException, IOException;
 
     /**
      * Posts whether an initial 'test' SMS was sent successfully, after calling the following method:
@@ -28,7 +35,7 @@ public interface VappRestApi {
      * @param body the json POST body
      * @return a {@link PostLogsResponse}
      */
-    PostLogsResponse postLog(PostLogsBody body) throws VappApiException;
+    PostLogsResponse postLog(PostLogsBody body) throws VappApiException, IOException;
 
     /**
      * Gets whether the server has received an SMS delivery notification from a 3rd party telco.
@@ -42,6 +49,6 @@ public interface VappRestApi {
     GetReceivedStatusResponse getReceivedStatus(String cli,
                                                 String ddi,
                                                 String random2,
-                                                String random3) throws VappApiException;
+                                                String random3) throws VappApiException, IOException;
 
 }

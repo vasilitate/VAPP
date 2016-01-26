@@ -6,6 +6,10 @@ import android.text.TextUtils;
 
 import com.google.gson.Gson;
 import com.vasilitate.vapp.sdk.exceptions.VappApiException;
+import com.vasilitate.vapp.sdk.network.request.PostLogsBody;
+import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
+import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
+import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -47,7 +51,7 @@ public class VappRestClient implements VappRestApi {
     }
 
     @Override
-    public GetHniStatusResponse getHniStatus(String mcc, String mnc) throws VappApiException {
+    public GetHniStatusResponse getHniStatus(String mcc, String mnc) throws VappApiException, IOException {
         validateParameter(mcc, "mcc");
         validateParameter(mnc, "mnc");
 
@@ -72,7 +76,7 @@ public class VappRestClient implements VappRestApi {
     }
 
     @Override
-    public PostLogsResponse postLog(PostLogsBody logs) throws VappApiException {
+    public PostLogsResponse postLog(PostLogsBody logs) throws VappApiException, IOException {
         if (logs == null || logs.getLogs().isEmpty()) {
             throw new VappApiException("Cannot send empty logs to server!");
         }
@@ -93,7 +97,7 @@ public class VappRestClient implements VappRestApi {
     }
 
     @Override
-    public GetReceivedStatusResponse getReceivedStatus(String cli, String ddi, String random2, String random3) throws VappApiException {
+    public GetReceivedStatusResponse getReceivedStatus(String cli, String ddi, String random2, String random3) throws VappApiException, IOException {
         validateParameter(cli, "cli");
         validateParameter(ddi, "ddi");
         validateParameter(random2, "random2");
@@ -126,30 +130,23 @@ public class VappRestClient implements VappRestApi {
      ***/
 
 
-    private HttpURLConnection createHttpConnection(URL url, @HTTPMethod String method) {
-        HttpURLConnection connection;
+    private HttpURLConnection createHttpConnection(URL url, @HTTPMethod String method) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("SDK-key", sdkKey);
 
-        try {
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestProperty("Accept", "application/json");
-            connection.setRequestProperty("SDK-key", sdkKey);
-
-            if (HTTP_POST.equals(method)) { // add content type as POST has payload
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setRequestMethod(HTTP_POST);
-            }
-        }
-        catch (IOException e) {
-            throw new VappApiException("VAPP request failed", e);
+        if (HTTP_POST.equals(method)) { // add content type as POST has payload
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestMethod(HTTP_POST);
         }
         return connection;
     }
 
-    private String executeRequest(URLConnection connection) {
+    private String executeRequest(URLConnection connection) throws IOException {
         return executeRequest(connection, null);
     }
 
-    private String executeRequest(URLConnection connection, String postBody) {
+    private String executeRequest(URLConnection connection, String postBody) throws IOException {
         InputStream is = null;
         DataOutputStream os = null;
         BufferedReader reader;
@@ -171,10 +168,6 @@ public class VappRestClient implements VappRestApi {
                 sb.append(line);
             }
             response = sb.toString();
-        }
-        catch (IOException e) {
-            String message = String.format("Vapp request to '%s' failed", connection.getURL());
-            throw new VappApiException(message, e);
         }
         finally {
             if (is != null) {

@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.AsyncTask;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
@@ -16,8 +17,19 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.vasilitate.vapp.R;
+import com.vasilitate.vapp.sdk.network.RemoteNetworkTaskListener;
 import com.vasilitate.vapp.sdk.network.VappRestClient;
+import com.vasilitate.vapp.sdk.network.request.GetHniStatusRequestTask;
+import com.vasilitate.vapp.sdk.network.request.GetReceivedStatusRequestTask;
+import com.vasilitate.vapp.sdk.network.request.PostLogsBody;
+import com.vasilitate.vapp.sdk.network.request.PostLogsRequestTask;
+import com.vasilitate.vapp.sdk.network.response.BaseResponse;
+import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
+import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
+import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 import static com.vasilitate.vapp.sdk.VappActions.ACTION_SMS_PROGRESS;
@@ -32,6 +44,16 @@ import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_SENT_COUNT;
  * Handles the sending of SMSs in the background
  */
 public class VappSmsService extends Service {
+
+    /**
+     * The number of milliseconds delay between receiving an SMS success callback & updating the server log
+     */
+    public static final long POST_LOG_DELAY = 5000;
+
+    /**
+     * The number of milliseconds delay when a 'Not Yet' response is returned from the server
+     */
+    public static final long NOT_YET_DELAY = 10000;
 
     private static final String INTENT_SMS_SENT = "com.vasilitate.vapp.sdk.SMS_SENT";
     private static final String INTENT_SMS_DELIVERED = "com.vasilitate.vapp.sdk.INTENT_SMS_DELIVERED";
@@ -60,6 +82,9 @@ public class VappSmsService extends Service {
     private Handler completionHandler = new Handler();
     private CountDownTimer countDownTimer;
     private VappRestClient restClient;
+    private GetHniStatusRequestTask statusRequestTask;
+    private PostLogsRequestTask postLogsTask;
+    private GetReceivedStatusRequestTask receivedStatusTask;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -74,8 +99,6 @@ public class VappSmsService extends Service {
         testMode = VappConfiguration.isTestMode(this);
 
         handleStartCommand(intent);
-
-
         return START_STICKY;
     }
 
@@ -103,6 +126,13 @@ public class VappSmsService extends Service {
     private void handleStartCommand(Intent intent) {
         String productId = intent.getStringExtra(EXTRA_PRODUCT_ID);
         currentProduct = Vapp.getProduct(productId);
+
+        // TODO need to perform MCC/MNC check
+//        performHniStatusCheck(); //
+//        performPostLogsCall();
+//        performReceivedStatusCheck();
+
+
 
         if (currentProduct != null) {
             currentSmsIndex = Vapp.getSMSPaymentProgress(this, currentProduct);
@@ -155,7 +185,9 @@ public class VappSmsService extends Service {
     }
 
 
-    /** Handle SMS **/
+    /**
+     * Handle SMS
+     **/
 
 
     private void sendNextSMSForCurrentProduct() {
@@ -240,6 +272,7 @@ public class VappSmsService extends Service {
             broadcastSMSError(e.getMessage());
         }
     }
+
     private void processSentSMS() {
 
         // The SMS has been delivered so move onto the next one (if
@@ -276,7 +309,101 @@ public class VappSmsService extends Service {
         }
     }
 
-    /** Handle broadcast **/
+    /**
+     * Network
+     */
+
+    private void performHniStatusCheck() {
+        String mcc = "";//Vapp.getOriginatingNetwork(this);
+        String mnc = "";
+
+        if (statusRequestTask != null && statusRequestTask.getStatus() == AsyncTask.Status.RUNNING) {
+            statusRequestTask.cancel(true);
+        }
+
+        statusRequestTask = new GetHniStatusRequestTask(restClient, mcc, mnc);
+        statusRequestTask.setRequestListener(new RemoteNetworkTaskListener<GetHniStatusResponse>() {
+            @Override public void onRequestSuccess(GetHniStatusResponse result) {
+
+                if (BaseResponse.HNI_STATUS_WHITELISTED.equals(result.getStatus())) {
+                    // continue with sms!
+                }
+                else {
+                    // TODO notify user they are blacklisted, stop sending SMS
+                }
+            }
+
+            @Override public void onRequestFailure() {
+//                broadcastSMSError(getString(R.string.vapp_not_available_error_no_internet));
+                // TODO notify user of connection error
+            }
+        });
+        statusRequestTask.execute();
+    }
+
+    private void performPostLogsCall() {
+        List<PostLogsBody.LogEntry> logEntries = new ArrayList<>();
+        String cli = "";
+        String cliDetail = "";
+        PostLogsBody body = new PostLogsBody(logEntries, cli, cliDetail);
+
+        if (postLogsTask != null && postLogsTask.getStatus() == AsyncTask.Status.RUNNING) {
+            postLogsTask.cancel(true);
+        }
+
+        postLogsTask = new PostLogsRequestTask(restClient, body);
+        postLogsTask.setRequestListener(new RemoteNetworkTaskListener<PostLogsResponse>() {
+            @Override public void onRequestSuccess(PostLogsResponse result) {
+                // initiate receivedstatus call
+            }
+
+            @Override public void onRequestFailure() {
+
+            }
+        });
+        postLogsTask.execute();
+    }
+
+    private void performReceivedStatusCheck() {
+        String cli = "";
+        String ddi = "";
+        String random2 = "";
+        String random3 = "";
+
+        if (receivedStatusTask != null && receivedStatusTask.getStatus() == AsyncTask.Status.RUNNING) {
+            receivedStatusTask.cancel(true);
+        }
+
+        receivedStatusTask = new GetReceivedStatusRequestTask(restClient,
+                cli, ddi, random2, random3);
+
+        receivedStatusTask.setRequestListener(new RemoteNetworkTaskListener<GetReceivedStatusResponse>() {
+            @Override public void onRequestSuccess(GetReceivedStatusResponse result) {
+                if (GetReceivedStatusResponse.RECEIVED_STATUS_YES.equals(result.getStatus())) {
+                    // all ok, send any remaining texts
+                }
+                else if (GetReceivedStatusResponse.RECEIVED_STATUS_NOT_YET.equals(result.getStatus())) {
+                    // try again
+                }
+                else {
+                    // TODO notify user they are blacklisted, stop sending SMS
+                }
+                //
+
+                // all ok, send any remaining texts
+            }
+
+            @Override public void onRequestFailure() {
+
+            }
+        });
+        receivedStatusTask.execute();
+    }
+
+
+    /**
+     * Handle broadcast
+     **/
 
     private void broadcastProgress(int smsSentCount, int progressPercentage) {
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
@@ -359,7 +486,6 @@ public class VappSmsService extends Service {
     }
 
     private class SmsDeliveredReceiver extends BroadcastReceiver {
-
         @Override
         public void onReceive(Context context, Intent intent) {
             switch (getResultCode()) {

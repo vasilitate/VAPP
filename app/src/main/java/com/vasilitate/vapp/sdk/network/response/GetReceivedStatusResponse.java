@@ -1,4 +1,4 @@
-package com.vasilitate.vapp.sdk.network;
+package com.vasilitate.vapp.sdk.network.response;
 
 import android.support.annotation.Nullable;
 import android.support.annotation.StringDef;

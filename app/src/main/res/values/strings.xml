@@ -4,9 +4,10 @@
 
     <string name="vapp_not_available_error_no_sim">Unable to use VAPP! as your SIM cannot be detected</string>
     <string name="vapp_not_available_error_no_network">Unable to use VAPP! - no network found</string>
+    <string name="vapp_not_available_error_no_internet">Unable to use VAPP! - an internet connection is required</string>
     <string name="vapp_network_not_supported">VAPP! is not currently supported on your network</string>
 
-    <string name="vapp_sms_sent_failure_generic">General SMS Send error.  Please try again later.</string>
+    <string name="vapp_sms_sent_failure_generic">General SMS Send error. Please try again later.</string>
     <string name="vapp_sms_sent_failure_no_service">No SMS Service.  Please check your settings and try again.</string>
     <string name="vapp_sms_sent_failure_null_pdu">No PUS set.  Please contact the App Retailer.</string>
     <string name="vapp_sms_sent_failure_radio_off">Radio turned off!  Please check your settings and try again.</string>

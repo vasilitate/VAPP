@@ -26,7 +26,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
         super.setUp();
         List<VappProduct> productList = new ArrayList<>();
         productList.add(new VappProduct("ExtraLives", 10, 1));
-        Vapp.initialise(getContext(), "TestApp", productList,  new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true, true );
+        Vapp.initialise(getContext(), "TestApp", productList,  new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true, true,"BG8R4X2PCXYCHRCRJTK6");
 
     }
 
