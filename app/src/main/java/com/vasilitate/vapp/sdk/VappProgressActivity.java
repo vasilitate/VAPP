@@ -1,6 +1,7 @@
 package com.vasilitate.vapp.sdk;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -163,4 +164,17 @@ public class VappProgressActivity extends Activity implements VappProgressListen
         }, DELAY_AFTER_FOREGROUND_COMPLETION );
     }
 
+    @Override public void onNetworkFailure() {
+        new AlertDialog.Builder(this)
+                .setMessage("No internet connection available. Please try again later.")
+                .setTitle("VAPP! Error")
+                .setPositiveButton("OK", null).show();
+    }
+
+    @Override public void onPurchaseUnsupported() {
+        new AlertDialog.Builder(this)
+                .setMessage("VAPP does not currently support purchases on your operator.")
+                .setTitle("VAPP! Error")
+                .setPositiveButton("OK", null).show();
+    }
 }

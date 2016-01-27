@@ -11,6 +11,8 @@ import static com.vasilitate.vapp.sdk.VappActions.EXTRA_ERROR_MESSAGE;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_PROGRESS_PERCENTAGE;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_CANCELLED;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_COMPLETED;
+import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_PURCHASE_NO_CONNECTION;
+import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_PURCHASE_UNSUPPORTED;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_SENT_COUNT;
 
 /**
@@ -73,12 +75,20 @@ public class VappProgressReceiver {
 
                 boolean completed = intent.getBooleanExtra(EXTRA_SMS_COMPLETED, false);
                 boolean cancelled = intent.getBooleanExtra(EXTRA_SMS_CANCELLED, false);
+                boolean unsupported = intent.getBooleanExtra(EXTRA_SMS_PURCHASE_UNSUPPORTED, false);
+                boolean noConnection = intent.getBooleanExtra(EXTRA_SMS_PURCHASE_NO_CONNECTION, false);
 
                 if (completed) {
                     progressListener.onCompletion();
                 }
                 else if (cancelled) {
                     progressListener.onCancelled();
+                }
+                else if (noConnection) {
+                    progressListener.onNetworkFailure();
+                }
+                else if (unsupported) {
+                    progressListener.onPurchaseUnsupported();
                 }
                 else {
                     String error = intent.getStringExtra(EXTRA_ERROR_MESSAGE);

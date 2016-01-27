@@ -3,17 +3,18 @@ package com.vasilitate.example.cases;
 import android.test.AndroidTestCase;
 
 import com.vasilitate.vapp.sdk.exceptions.VappApiException;
+import com.vasilitate.vapp.sdk.network.VappRestClient;
+import com.vasilitate.vapp.sdk.network.request.PostLogsBody;
 import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
-import com.vasilitate.vapp.sdk.network.request.PostLogsBody;
 import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
-import com.vasilitate.vapp.sdk.network.VappRestClient;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse.HNI_STATUS_WHITELISTED;
 import static com.vasilitate.vapp.sdk.network.request.PostLogsBody.LogEntry;
+import static com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse.HNI_STATUS_WHITELISTED;
 
 public class RestTest extends AndroidTestCase {
 
@@ -37,7 +38,7 @@ public class RestTest extends AndroidTestCase {
         vappRestClient = new VappRestClient(ENDPOINT, VALID_SDK_KEY);
     }
 
-    public void testInvalidSdkKey() {
+    public void testInvalidSdkKey() throws IOException {
         vappRestClient = new VappRestClient(ENDPOINT, null);
         GetHniStatusResponse response = vappRestClient.getHniStatus(VALID_MCC, VALID_MCC);
         assertNotNull(response);
@@ -51,12 +52,12 @@ public class RestTest extends AndroidTestCase {
         assertNotNull(response.getError());
     }
 
-    public void testInvalidGetHniStatusParams() {
+    public void testInvalidGetHniStatusParams() throws IOException {
         checkInvalidHniStatusCall(null, VALID_MNC);
         checkInvalidHniStatusCall(VALID_MCC, null);
     }
 
-    private void checkInvalidHniStatusCall(String mcc, String mnc) {
+    private void checkInvalidHniStatusCall(String mcc, String mnc) throws IOException {
         try {
             vappRestClient.getHniStatus(mcc, mnc);
             fail("Should reject invalid parameter");
@@ -65,20 +66,20 @@ public class RestTest extends AndroidTestCase {
         }
     }
 
-    public void testGetHniStatus() {
+    public void testGetHniStatus() throws IOException {
         GetHniStatusResponse response = vappRestClient.getHniStatus(VALID_MCC, VALID_MNC);
         assertNotNull(response);
         assertEquals(HNI_STATUS_WHITELISTED, response.getStatus());
     }
 
-    public void testInvalidGetReceivedStatus() {
+    public void testInvalidGetReceivedStatus() throws IOException {
         checkInvalidReceivedStatusCall(null, VALID_DDI, VALID_RANDOM_2, VALID_RANDOM_3);
         checkInvalidReceivedStatusCall(VALID_CLI, "", VALID_RANDOM_2, VALID_RANDOM_3);
         checkInvalidReceivedStatusCall(VALID_CLI, VALID_DDI, null, VALID_RANDOM_3);
         checkInvalidReceivedStatusCall(VALID_CLI, VALID_DDI, VALID_RANDOM_2, "");
     }
 
-    public void testGetReceivedStatus() {
+    public void testGetReceivedStatus() throws IOException {
         // invalid '+' symbol included in numbers should be handled
         GetReceivedStatusResponse receivedStatus = vappRestClient.getReceivedStatus("+" + VALID_CLI,
                 VALID_DDI,
@@ -89,7 +90,7 @@ public class RestTest extends AndroidTestCase {
         assertEquals(GetReceivedStatusResponse.RECEIVED_STATUS_BLACKLISTED, receivedStatus.getReceived());
     }
 
-    private void checkInvalidReceivedStatusCall(String cli, String ddi, String rand2, String rand3) {
+    private void checkInvalidReceivedStatusCall(String cli, String ddi, String rand2, String rand3) throws IOException {
         try {
             vappRestClient.getReceivedStatus(cli, ddi, rand2, rand3);
             fail("Should reject invalid parameter");
@@ -103,7 +104,7 @@ public class RestTest extends AndroidTestCase {
         checkInvalidPostLogsCall(VALID_MESSAGE, "");
     }
 
-    public void testPostLogs() {
+    public void testPostLogs() throws IOException {
         LogEntry entry = new LogEntry(VALID_MESSAGE, VALID_DDI);
         List<LogEntry> values = new ArrayList<>();
         values.add(entry);

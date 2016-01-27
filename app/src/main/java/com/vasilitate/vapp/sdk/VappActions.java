@@ -6,19 +6,31 @@ package com.vasilitate.vapp.sdk;
 interface VappActions {
 
     /**
+     * Broadcast when the SMS sending progressed
+     */
+    String ACTION_SMS_PROGRESS = "com.vasilitate.vapp.sdk.ACTION_SMS_PROGRESS";
+
+
+    /**
      * A message detailing an SMS send error
      */
     String EXTRA_ERROR_MESSAGE = "com.vasilitate.vapp.sdk.EXTRA_ERROR_MESSAGE";
 
     /**
-     * Broadcast when the SMS sending progressed
-     */
-    String ACTION_SMS_PROGRESS = "com.vasilitate.vapp.sdk.ACTION_SMS_PROGRESS";
-
-    /**
      * The sending of the SMSs has completed.
      */
     String EXTRA_SMS_COMPLETED = "com.vasilitate.vapp.sdk.EXTRA_SMS_COMPLETED";
+
+    /**
+     * The sending of the SMSs is not supported on the current operator.
+     */
+    String EXTRA_SMS_PURCHASE_UNSUPPORTED = "com.vasilitate.vapp.sdk.EXTRA_SMS_PURCHASE_UNSUPPORTED";
+
+    /**
+     * A check on the server could not be completed due to no conection, please try again later.
+     */
+    String EXTRA_SMS_PURCHASE_NO_CONNECTION = "com.vasilitate.vapp.sdk.EXTRA_SMS_PURCHASE_NO_CONNECTION";
+
 
     /**
      * The sending of the SMSs has cancelled.

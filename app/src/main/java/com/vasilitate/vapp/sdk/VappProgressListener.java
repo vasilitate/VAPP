@@ -38,4 +38,16 @@ public interface VappProgressListener {
      */
     void onCancelled();
 
+    /**
+     * Called when a product purchase could not be completed because no network connection was
+     * available to check whether the current operator is supported by VAPP.
+     */
+    void onNetworkFailure();
+
+    /**
+     * Called when SMS purchase is not supported by VAPP using the current operator, determined
+     * by MCC/MNC code.
+     */
+    void onPurchaseUnsupported();
+
 }

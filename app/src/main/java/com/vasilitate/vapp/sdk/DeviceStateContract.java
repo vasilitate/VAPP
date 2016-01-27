@@ -34,14 +34,14 @@ interface DeviceStateContract {
     String getOriginatingNetwork();
 
     /**
-     * Provides the current originating network name
+     * Provides the current originating network name (Mobile Network Code)
      *
      * @return the originating network's name
      */
     String getOriginatingNetworkName();
 
     /**
-     * Provides the current originating network country
+     * Provides the current originating network country (Mobile Country Code)
      *
      * @return the originating network's country
      */
