@@ -39,6 +39,7 @@ import static com.vasilitate.vapp.sdk.VappActions.EXTRA_PROGRESS_PERCENTAGE;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_CANCELLED;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_COMPLETED;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_PURCHASE_NO_CONNECTION;
+import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_PURCHASE_UNSUPPORTED;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_SENT_COUNT;
 
 /**
@@ -331,8 +332,8 @@ public class VappSmsService extends Service {
                 if (BaseResponse.HNI_STATUS_WHITELISTED.equals(result.getStatus())) {
                     sendNextSMSForCurrentProduct(); // send initial first sms!
                 }
-                else { // notify user they are blacklisted, fallout
-                    // TODO stop sending SMS & notify user
+                else { // blacklisted!
+                    handlePurchaseUnsupported();
                 }
             }
         });
@@ -380,9 +381,8 @@ public class VappSmsService extends Service {
                     // TODO try again in 10s
                 }
                 else {
-                    // TODO notify user they are blacklisted, stop sending SMS
+                    handlePurchaseUnsupported();
                 }
-                // all ok, send any remaining texts
             }
         });
         receivedStatusTask.execute();
@@ -390,15 +390,7 @@ public class VappSmsService extends Service {
 
     abstract class ResponseHandler<T> implements RemoteNetworkTaskListener<T> {
         @Override public void onRequestFailure() {
-            broadcastNoConnectionAvailable(); // notify that API calls were not successful
-            stopSelf();
-        }
-
-        private void broadcastNoConnectionAvailable() {
-            Intent intent = new Intent(ACTION_SMS_PROGRESS);
-            intent.putExtra(EXTRA_SMS_PURCHASE_NO_CONNECTION, true);
-            intent.putExtra(EXTRA_ERROR_MESSAGE, getString(R.string.vapp_not_available_error_no_internet));
-            sendBroadcast(intent);
+            handleNoConnectionAvailable();
         }
     }
 
@@ -438,6 +430,20 @@ public class VappSmsService extends Service {
         intent.putExtra(EXTRA_SMS_COMPLETED, true);
         sendBroadcast(intent);
         VappNotificationManager.post(VappSmsService.this);
+    }
+
+    private void handleNoConnectionAvailable() { // inform that no connection available, stop service
+        Intent intent = new Intent(ACTION_SMS_PROGRESS);
+        intent.putExtra(EXTRA_SMS_PURCHASE_NO_CONNECTION, true);
+        sendBroadcast(intent);
+        stopSelf();
+    }
+
+    private void handlePurchaseUnsupported() { // inform that purchase not supported, stop service
+        Intent intent = new Intent(ACTION_SMS_PROGRESS);
+        intent.putExtra(EXTRA_SMS_PURCHASE_UNSUPPORTED, true);
+        sendBroadcast(intent);
+        stopSelf();
     }
 
     private class CancelPaymentReceiver extends BroadcastReceiver {
