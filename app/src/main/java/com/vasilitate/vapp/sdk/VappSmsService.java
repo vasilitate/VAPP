@@ -10,7 +10,6 @@ import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.telephony.SmsManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -22,6 +21,10 @@ import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
 
+import static android.telephony.SmsManager.RESULT_ERROR_GENERIC_FAILURE;
+import static android.telephony.SmsManager.RESULT_ERROR_NO_SERVICE;
+import static android.telephony.SmsManager.RESULT_ERROR_NULL_PDU;
+import static android.telephony.SmsManager.RESULT_ERROR_RADIO_OFF;
 import static com.vasilitate.vapp.sdk.VappActions.ACTION_SMS_PROGRESS;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_ERROR_MESSAGE;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_PRODUCT_ID;
@@ -64,15 +67,19 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     private final Handler completionHandler = new Handler();
     private final Handler networkHandler = new Handler();
 
-    private VappRestClient restClient;
+    private final VappRestClient restClient;
+    private final VappDbHelper vappDbHelper;
     private SmsSendManager smsSendManager;
     private SmsApiCheckManager smsApiCheckManager;
 
+    public VappSmsService() {
+        vappDbHelper = new VappDbHelper(this);
+        restClient = new VappRestClient(getString(R.string.api_endpoint), VappConfiguration.getSdkKey(this));
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        restClient = new VappRestClient(getString(R.string.api_endpoint), VappConfiguration.getSdkKey(this));
         testMode = VappConfiguration.isTestMode(this);
-
         setupReceivers();
         handleStartCommand(intent);
         return START_STICKY;
@@ -105,6 +112,9 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
         }
         if (cancelPaymentReceiver != null) {
             unregisterReceiver(cancelPaymentReceiver);
+        }
+        if (smsSendManager != null) {
+            smsSendManager.destroy();
         }
         super.onDestroy();
     }
@@ -176,7 +186,18 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                 },
                 new ResponseHandler<PostLogsResponse>() {
                     @Override public void onRequestSuccess(PostLogsResponse result) {
-                        smsApiCheckManager.performReceivedStatusCheck();
+                        vappDbHelper.clearSentSmsLogs();
+
+
+                        if (smsSendManager.getCurrentSmsIndex() >= 1) {
+                            // check that the server received delivery notification from telco
+
+                            // TODO delay X secs
+                            smsApiCheckManager.performReceivedStatusCheck();
+                        }
+                        else { // completed purchase
+                            // TODO handle finish
+                        }
                     }
                 });
     }
@@ -190,7 +211,9 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     public void onSmsProgressUpdate(int currentSmsIndex, int progressPercentage) {
         broadcastProgress(currentSmsIndex, progressPercentage);
 
-        if (progressPercentage == 100) {
+        if (progressPercentage == 100) { // send log of all sent sms to server
+            smsApiCheckManager.performPostLogsCall(vappDbHelper.retrieveSentSmsLogs());
+
             // Delay the sending of the completion so that any clients can display
             // the completion of the purchase.
             completionHandler.postDelayed(new Runnable() {
@@ -201,6 +224,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
             }, 2000);
         }
     }
+
 
     @Override public void onSmsSendError(String message) {
         broadcastSMSError(message);
@@ -288,16 +312,16 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                     // Nothing to do - only marking off the SMS when we know it's been
                     // Delivered
                     break;
-                case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                case RESULT_ERROR_GENERIC_FAILURE:
                     errorResId = R.string.vapp_sms_sent_failure_generic;
                     break;
-                case SmsManager.RESULT_ERROR_NO_SERVICE:
+                case RESULT_ERROR_NO_SERVICE:
                     errorResId = R.string.vapp_sms_sent_failure_no_service;
                     break;
-                case SmsManager.RESULT_ERROR_NULL_PDU:
+                case RESULT_ERROR_NULL_PDU:
                     errorResId = R.string.vapp_sms_sent_failure_null_pdu;
                     break;
-                case SmsManager.RESULT_ERROR_RADIO_OFF:
+                case RESULT_ERROR_RADIO_OFF:
                     errorResId = R.string.vapp_sms_sent_failure_radio_off;
                     break;
             }
@@ -312,11 +336,24 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
         public void onReceive(Context context, Intent intent) {
             switch (getResultCode()) {
                 case Activity.RESULT_OK:
-                    smsSendManager.processSentSMS();
+                    handleSmsDeliverySuccess();
                     break;
                 case Activity.RESULT_CANCELED:
                     broadcastSMSError(getString(R.string.vapp_sms_delivery_failure));
                     break;
+            }
+        }
+
+        private void handleSmsDeliverySuccess() {
+            int smsIndex = smsSendManager.getCurrentSmsIndex();
+            smsSendManager.notifySmsDelivered();
+
+            if (smsIndex == 0) {
+                // should check that the server received delivery notification from telco
+                smsApiCheckManager.performPostLogsCall(vappDbHelper.retrieveSentSmsLogs());
+            }
+            else {
+                smsSendManager.sendSMSForCurrentProduct();
             }
         }
     }

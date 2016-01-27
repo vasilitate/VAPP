@@ -1,17 +1,24 @@
 package com.vasilitate.vapp.sdk;
 
 import android.app.PendingIntent;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.CountDownTimer;
 import android.telephony.SmsManager;
 import android.util.Log;
 
 import java.util.Stack;
 
+import static com.vasilitate.vapp.sdk.VappDbHelper.SmsEntry;
+
 /**
  * Manages the sending of SMS messages at random intervals.
  */
 class SmsSendManager {
+
+    private String currentDeliveryNumber;
+    private String currentSmsMessage;
 
     public interface SmsSendListener {
 
@@ -55,6 +62,8 @@ class SmsSendManager {
     private final PendingIntent sentPI;
     private final PendingIntent deliveredPI;
 
+    private final SQLiteDatabase writableDatabase;
+
     SmsSendManager(VappProduct currentProduct, boolean testMode,
                    PendingIntent sentPI, PendingIntent deliveredPI,
                    Context context, SmsSendListener sendListener) {
@@ -66,14 +75,16 @@ class SmsSendManager {
         this.context = context.getApplicationContext();
         this.sendListener = sendListener;
 
+        VappDbHelper vappDbHelper = new VappDbHelper(this.context);
+        writableDatabase = vappDbHelper.getWritableDatabase();
         initialiseRandomSendIntervals();
     }
 
     void sendSMSForCurrentProduct() {
         // Ensure there are still SMSs to send.  If not (e.g. after a re-start?) mark the
         // current product as bought...
-        if (sendIntervals.size() == 0) {
-            processSentSMS();
+        if (sendIntervals.isEmpty()) {
+            completeSmsPurchase();
             return;
         }
 
@@ -128,35 +139,46 @@ class SmsSendManager {
         }
     }
 
-    /**
-     * Prepares the next sms for sending, if any exist.
-     */
-    void processSentSMS() {
+    void notifySmsDelivered() {
+        insertSmsLogDbRecord();
+
         // The SMS has been delivered so move onto the next one (if
         // we have not reached the end).
-        if (currentProduct != null) {
-            currentSmsIndex++; // Move onto the next message...
+        currentSmsIndex++; // Move onto the next message...
 
-            if (!sendIntervals.isEmpty()) { // Store the progress...
-                VappConfiguration.setSentSmsCountForProduct(context, currentProduct, currentSmsIndex);
+        if (!sendIntervals.isEmpty()) { // Store the progress...
+            VappConfiguration.setSentSmsCountForProduct(context, currentProduct, currentSmsIndex);
+        }
+        else {
+            completeSmsPurchase();
+        }
+    }
 
-                // Now initiate the sending of the next SMS...
-                sendSMSForCurrentProduct();
-            }
-            else {
-                // All SMSs have been sent for the current product, update the redeemed count...
-                Vapp.addRedeemedProduct(context, currentProduct);
+    private void insertSmsLogDbRecord() {
+        ContentValues values = new ContentValues();
+        values.put(SmsEntry.COLUMN_NAME_MESSAGE, currentSmsMessage);
+        values.put(SmsEntry.COLUMN_NAME_DDI, currentDeliveryNumber);
+        writableDatabase.insert(SmsEntry.TABLE_NAME, null, values);
+    }
 
-                if (sendListener != null) { // Send a final progress update showing completion.
-                    sendListener.onSmsProgressUpdate(currentProduct.getRequiredSmsCount(), 100);
-                }
-            }
+    private void completeSmsPurchase() {
+        // All SMSs have been sent for the current product, update the redeemed count...
+        Vapp.addRedeemedProduct(context, currentProduct);
+
+        if (sendListener != null) { // Send a final progress update showing completion.
+            sendListener.onSmsProgressUpdate(currentProduct.getRequiredSmsCount(), 100);
         }
     }
 
     void cancel() {
         if (countDownTimer != null) {
             countDownTimer.cancel();
+        }
+    }
+
+    void destroy() {
+        if (writableDatabase != null) {
+            writableDatabase.close();
         }
     }
 
@@ -169,18 +191,19 @@ class SmsSendManager {
      */
     private void sendSMS() {
         try {
-            String smsPhoneNumber = VappProductManager.getRandomNumberInRange(Vapp.getDestinationNumberRange());
-            String smsMessage = Vapp.getGeneratedSmsForProduct(context, currentProduct, totalSMSCount, currentSmsIndex);
+            currentDeliveryNumber = VappProductManager.getRandomNumberInRange(Vapp.getDestinationNumberRange());
+            currentSmsMessage = Vapp.getGeneratedSmsForProduct(context, currentProduct, totalSMSCount, currentSmsIndex);
 
-            if (testMode) {
-                Log.d("Vapp!", "Test SMS: " + smsPhoneNumber + ": " + smsMessage);
-                processSentSMS();
+            if (testMode) { // mock sending of sms and proceed to next
+                Log.d("Vapp!", "Test SMS: " + currentDeliveryNumber + ": " + currentSmsMessage);
+                notifySmsDelivered();
+                sendSMSForCurrentProduct();
             }
             else {
                 SmsManager sms = SmsManager.getDefault();
-                sms.sendTextMessage(smsPhoneNumber,
+                sms.sendTextMessage(currentDeliveryNumber,
                         null,           // Call center number.
-                        smsMessage,
+                        currentSmsMessage,
                         sentPI,
                         deliveredPI);
             }

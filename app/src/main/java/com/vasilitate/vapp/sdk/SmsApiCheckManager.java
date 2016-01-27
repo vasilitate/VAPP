@@ -13,7 +13,6 @@ import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
 
-import java.util.ArrayList;
 import java.util.List;
 
 class SmsApiCheckManager {
@@ -58,11 +57,10 @@ class SmsApiCheckManager {
         statusRequestTask.execute();
     }
 
-    void performPostLogsCall() {
-        List<PostLogsBody.LogEntry> logEntries = new ArrayList<>(); // TODO initialise correctly
-        String cli = "";
+    void performPostLogsCall(List<PostLogsBody.LogEntry> entryList) {
+        String cli = ""; // TODO initialise correctly
         String cliDetail = "";
-        PostLogsBody body = new PostLogsBody(logEntries, cli, cliDetail);
+        PostLogsBody body = new PostLogsBody(entryList, cli, cliDetail);
 
         if (postLogsTask != null && postLogsTask.getStatus() == AsyncTask.Status.RUNNING) {
             postLogsTask.cancel(true);
