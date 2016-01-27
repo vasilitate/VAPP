@@ -3,6 +3,7 @@ package com.vasilitate.vapp.sdk;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 
@@ -488,6 +489,39 @@ public abstract class Vapp {
                     }
                 });
         alertBuilder.create().show();
+    }
+
+
+    /**
+     * Returns the MCC for the current operator
+     * @param context the current context
+     * @return the mcc
+     * @throws VappException
+     */
+    @Nullable static String getMobileCountryCode(Context context) throws VappException {
+        checkIfInitialised();
+        String hni = getOriginatingNetwork(context);
+
+        if (hni != null && hni.length() >= 2) {
+            return hni.substring(0, 3); // mcc is first 3 digits of HNI
+        }
+        return null;
+    }
+
+    /**
+     * Returns the MNC for the current operator
+     * @param context the current context
+     * @return the mnc
+     * @throws VappException
+     */
+    @Nullable static String getmobileNetworkCode(Context context) throws VappException {
+        checkIfInitialised();
+        String hni = getOriginatingNetwork(context);
+
+        if (hni != null && hni.length() >= 2) {
+            return hni.substring(3); // mnc starts after first 3 digits of HNI
+        }
+        return null;
     }
 
     static void addRedeemedProduct(Context context, VappProduct product) throws VappException {
