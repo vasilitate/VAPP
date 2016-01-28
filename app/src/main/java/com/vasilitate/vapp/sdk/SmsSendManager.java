@@ -1,15 +1,27 @@
 package com.vasilitate.vapp.sdk;
 
+import android.app.Activity;
 import android.app.PendingIntent;
+import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.CountDownTimer;
 import android.telephony.SmsManager;
 import android.util.Log;
 
+import com.vasilitate.vapp.R;
+
+import java.lang.ref.WeakReference;
 import java.util.Stack;
 
+import static android.telephony.SmsManager.RESULT_ERROR_GENERIC_FAILURE;
+import static android.telephony.SmsManager.RESULT_ERROR_NO_SERVICE;
+import static android.telephony.SmsManager.RESULT_ERROR_NULL_PDU;
+import static android.telephony.SmsManager.RESULT_ERROR_RADIO_OFF;
 import static com.vasilitate.vapp.sdk.VappDbHelper.SmsEntry;
 
 /**
@@ -17,8 +29,8 @@ import static com.vasilitate.vapp.sdk.VappDbHelper.SmsEntry;
  */
 class SmsSendManager {
 
-    private String currentDeliveryNumber;
-    private String currentSmsMessage;
+    private static final String INTENT_SMS_SENT = "com.vasilitate.vapp.sdk.SMS_SENT";
+    private static final String INTENT_SMS_DELIVERED = "com.vasilitate.vapp.sdk.INTENT_SMS_DELIVERED";
 
     public interface SmsSendListener {
 
@@ -43,9 +55,15 @@ class SmsSendManager {
          * @param message a message describing the error
          */
         void onSmsSendError(String message);
+
+        // callbacks for broadcast receivers
+        void onSmsDeliverySuccess();
+        void onSmsDeliveryFailure();
+        void onSmsSendComplete(Integer errorResId);
     }
 
     private VappProduct currentProduct;
+    private VappSms currentSmsMessage;
 
     private Stack<Integer> sendIntervals;
     private int secondsRemaining;
@@ -57,22 +75,25 @@ class SmsSendManager {
     private boolean testMode;
 
     private final Context context;
-    private final SmsSendListener sendListener;
+    private final WeakReference<Service> serviceRef;
 
+    private final SmsSendListener sendListener;
     private final PendingIntent sentPI;
     private final PendingIntent deliveredPI;
-
     private final SQLiteDatabase writableDatabase;
+    private SmsSentReceiver smsSentReceiver;
+    private SmsDeliveredReceiver smsDeliveredReceiver;
 
     SmsSendManager(VappProduct currentProduct, boolean testMode,
                    PendingIntent sentPI, PendingIntent deliveredPI,
-                   Context context, SmsSendListener sendListener) {
+                   Service context, SmsSendListener sendListener) {
 
         this.currentProduct = currentProduct;
         this.testMode = testMode;
         this.sentPI = sentPI;
         this.deliveredPI = deliveredPI;
         this.context = context.getApplicationContext();
+        this.serviceRef = new WeakReference<>(context);
         this.sendListener = sendListener;
 
         VappDbHelper vappDbHelper = new VappDbHelper(this.context);
@@ -80,6 +101,10 @@ class SmsSendManager {
         initialiseRandomSendIntervals();
     }
 
+    /**
+     * Triggers the sending of an SMS for the current product. The time at which the SMS may be delayed
+     * if the random interval since the last sending has not yet passed.
+     */
     void sendSMSForCurrentProduct() {
         // Ensure there are still SMSs to send.  If not (e.g. after a re-start?) mark the
         // current product as bought...
@@ -109,36 +134,44 @@ class SmsSendManager {
             sendSMS();
         }
         else {
-            countDownTimer = new CountDownTimer(currentInterval * 1000, 200) {
-                private int lastProgressPercentage = -1;
-
-                @Override
-                public void onTick(long millisUntilFinished) {
-
-                    int remainingCount = secondsRemaining -
-                            (currentInterval - (int) (millisUntilFinished / 1000));
-
-                    int progressPercentage = (durationInSeconds - remainingCount) * 100 / durationInSeconds;
-
-                    if (lastProgressPercentage != progressPercentage) {
-
-                        if (sendListener != null) {
-                            sendListener.onSmsProgressUpdate(progressPercentage);
-                        }
-                        lastProgressPercentage = progressPercentage;
-                    }
-                }
-
-                @Override
-                public void onFinish() {
-                    secondsRemaining -= sendIntervals.pop();
-                    sendSMS();
-                }
-            };
-            countDownTimer.start();
+            startSmsSendCountdown(currentInterval);
         }
     }
 
+    private void startSmsSendCountdown(final int currentInterval) {
+        countDownTimer = new CountDownTimer(currentInterval * 1000, 200) {
+            private int lastProgressPercentage = -1;
+
+            @Override
+            public void onTick(long millisUntilFinished) {
+
+                int remainingCount = secondsRemaining -
+                        (currentInterval - (int) (millisUntilFinished / 1000));
+
+                int progressPercentage = (durationInSeconds - remainingCount) * 100 / durationInSeconds;
+
+                if (lastProgressPercentage != progressPercentage) {
+
+                    if (sendListener != null) {
+                        sendListener.onSmsProgressUpdate(progressPercentage);
+                    }
+                    lastProgressPercentage = progressPercentage;
+                }
+            }
+
+            @Override
+            public void onFinish() {
+                secondsRemaining -= sendIntervals.pop();
+                sendSMS();
+            }
+        };
+        countDownTimer.start();
+    }
+
+    /**
+     * Notify the manager that an SMS has been successfully delivered, and that it should update
+     * the DB records and check whether the purchase has been completed.
+     */
     void notifySmsDelivered() {
         insertSmsLogDbRecord();
 
@@ -154,31 +187,32 @@ class SmsSendManager {
         }
     }
 
-    private void insertSmsLogDbRecord() {
-        ContentValues values = new ContentValues();
-        values.put(SmsEntry.COLUMN_NAME_MESSAGE, currentSmsMessage);
-        values.put(SmsEntry.COLUMN_NAME_DDI, currentDeliveryNumber);
-        writableDatabase.insert(SmsEntry.TABLE_NAME, null, values);
-    }
-
-    private void completeSmsPurchase() {
-        // All SMSs have been sent for the current product, update the redeemed count...
-        Vapp.addRedeemedProduct(context, currentProduct);
-
-        if (sendListener != null) { // Send a final progress update showing completion.
-            sendListener.onSmsProgressUpdate(currentProduct.getRequiredSmsCount(), 100);
-        }
-    }
-
+    /**
+     * Cancels the sending of the current message, if {@link SmsSendManager#sendSMSForCurrentProduct()}
+     * has been called.
+     */
     void cancel() {
         if (countDownTimer != null) {
             countDownTimer.cancel();
         }
     }
 
+    /**
+     * Closes the DB connection
+     */
     void destroy() {
         if (writableDatabase != null) {
             writableDatabase.close();
+        }
+        Service service = serviceRef.get();
+
+        if (service != null && smsSentReceiver != null) {
+            service.unregisterReceiver(smsSentReceiver);
+            smsSentReceiver = null;
+        }
+        if (service != null && smsDeliveredReceiver != null) {
+            service.unregisterReceiver(smsDeliveredReceiver);
+            smsDeliveredReceiver = null;
         }
     }
 
@@ -190,24 +224,59 @@ class SmsSendManager {
         return !(currentSmsIndex < currentProduct.getRequiredSmsCount());
     }
 
+    void setupReceivers() {
+        smsSentReceiver = new SmsSentReceiver();
+        smsDeliveredReceiver = new SmsDeliveredReceiver();
+        Service service = serviceRef.get();
+
+        if (service != null) {
+            service.registerReceiver(smsSentReceiver, new IntentFilter(INTENT_SMS_SENT));
+            service.registerReceiver(smsDeliveredReceiver, new IntentFilter(INTENT_SMS_DELIVERED));
+        }
+    }
+
+    public VappSms getCurrentSmsMessage() {
+        return currentSmsMessage;
+    }
+
+    /**
+     * Inserts a record that an SMS was sent into the DB.
+     */
+    private void insertSmsLogDbRecord() {
+        ContentValues values = new ContentValues();
+        values.put(SmsEntry.COLUMN_NAME_MESSAGE, currentSmsMessage.toString());
+        values.put(SmsEntry.COLUMN_NAME_DDI, currentSmsMessage.getDeliveryNumber());
+        writableDatabase.insert(SmsEntry.TABLE_NAME, null, values);
+    }
+
+    private void completeSmsPurchase() {
+        // All SMSs have been sent for the current product, update the redeemed count...
+        Vapp.addRedeemedProduct(context, currentProduct);
+
+        if (sendListener != null) {
+            sendListener.onSmsProgressUpdate(currentProduct.getRequiredSmsCount(), 100);
+        }
+    }
+
     /**
      * Sends off a queued SMS to VAPP, callback is delivered via PendingIntents in the service.
      */
     private void sendSMS() {
         try {
-            currentDeliveryNumber = VappProductManager.getRandomNumberInRange(Vapp.getDestinationNumberRange());
-            currentSmsMessage = Vapp.getGeneratedSmsForProduct(context, currentProduct, totalSMSCount, currentSmsIndex);
+            currentSmsMessage = Vapp.generateSmsForProduct(context, currentProduct, totalSMSCount, currentSmsIndex);
 
             if (testMode) { // mock sending of sms and proceed to next
-                Log.d("Vapp!", "Test SMS: " + currentDeliveryNumber + ": " + currentSmsMessage);
-                notifySmsDelivered();
-                sendSMSForCurrentProduct();
+                Log.d("Vapp!", "Test SMS: " + currentSmsMessage.getDeliveryNumber() + ": " + currentSmsMessage);
+
+                if (sendListener != null) {
+                    sendListener.onSmsDeliverySuccess();
+                }
             }
             else {
                 SmsManager sms = SmsManager.getDefault();
-                sms.sendTextMessage(currentDeliveryNumber,
+                sms.sendTextMessage(currentSmsMessage.getDeliveryNumber(),
                         null,           // Call center number.
-                        currentSmsMessage,
+                        currentSmsMessage.toString(),
                         sentPI,
                         deliveredPI);
             }
@@ -237,4 +306,53 @@ class SmsSendManager {
         }
         durationInSeconds = secondsRemaining;
     }
+
+    private class SmsSentReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+
+            Integer errorResId = null;
+            switch (getResultCode()) {
+                case Activity.RESULT_OK:
+                    // Nothing to do - only marking off the SMS when we know it's been
+                    // Delivered
+                    break;
+                case RESULT_ERROR_GENERIC_FAILURE:
+                    errorResId = R.string.vapp_sms_sent_failure_generic;
+                    break;
+                case RESULT_ERROR_NO_SERVICE:
+                    errorResId = R.string.vapp_sms_sent_failure_no_service;
+                    break;
+                case RESULT_ERROR_NULL_PDU:
+                    errorResId = R.string.vapp_sms_sent_failure_null_pdu;
+                    break;
+                case RESULT_ERROR_RADIO_OFF:
+                    errorResId = R.string.vapp_sms_sent_failure_radio_off;
+                    break;
+            }
+            if (sendListener != null) {
+                sendListener.onSmsSendComplete(errorResId);
+            }
+        }
+    }
+
+    private class SmsDeliveredReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (getResultCode()) {
+                case Activity.RESULT_OK:
+                    if (sendListener != null) {
+                        sendListener.onSmsDeliverySuccess();
+                    }
+                    break;
+                case Activity.RESULT_CANCELED:
+                    if (sendListener != null) {
+                        sendListener.onSmsDeliveryFailure();
+                    }
+                    break;
+            }
+        }
+    }
+
 }

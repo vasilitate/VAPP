@@ -27,7 +27,7 @@ public enum MyProduct {
 
     public static List<VappProduct> getProducts() {
 
-        List<VappProduct> productList = new ArrayList<VappProduct>();
+        List<VappProduct> productList = new ArrayList<>();
         for( MyProduct product : values() ) {
             productList.add(product.vappProduct);
         }

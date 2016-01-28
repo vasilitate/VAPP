@@ -13,20 +13,22 @@ import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
 
-import java.util.List;
-
+/**
+ * Performs API calls to the VAPP server on a background thread, and calls delegate methods when an
+ * error/response is received.
+ */
 class SmsApiCheckManager {
 
     private GetHniStatusRequestTask statusRequestTask;
     private PostLogsRequestTask postLogsTask;
     private GetReceivedStatusRequestTask receivedStatusTask;
 
-    private RemoteNetworkTaskListener<GetHniStatusResponse> hniStatusResponseListener;
-    private RemoteNetworkTaskListener<GetReceivedStatusResponse> receivedStatusResponseListener;
-    private RemoteNetworkTaskListener<PostLogsResponse> postLogsResponseListener;
+    private final RemoteNetworkTaskListener<GetHniStatusResponse> hniStatusResponseListener;
+    private final RemoteNetworkTaskListener<GetReceivedStatusResponse> receivedStatusResponseListener;
+    private final RemoteNetworkTaskListener<PostLogsResponse> postLogsResponseListener;
 
-    private Context context;
-    private VappRestClient restClient;
+    private final Context context;
+    private final VappRestClient restClient;
 
     SmsApiCheckManager(VappRestClient restClient, Context context,
                               RemoteNetworkTaskListener<GetHniStatusResponse> hniStatusResponseListener,
@@ -46,7 +48,7 @@ class SmsApiCheckManager {
      */
     void performHniStatusCheck() {
         String mcc = Vapp.getMobileCountryCode(context);
-        String mnc = Vapp.getmobileNetworkCode(context);
+        String mnc = Vapp.getMobileNetworkCode(context);
 
         if (statusRequestTask != null && statusRequestTask.getStatus() == AsyncTask.Status.RUNNING) {
             statusRequestTask.cancel(true);
@@ -57,11 +59,7 @@ class SmsApiCheckManager {
         statusRequestTask.execute();
     }
 
-    void performPostLogsCall(List<PostLogsBody.LogEntry> entryList) {
-        String cli = ""; // TODO initialise correctly
-        String cliDetail = "";
-        PostLogsBody body = new PostLogsBody(entryList, cli, cliDetail);
-
+    void performPostLogsCall(PostLogsBody body) {
         if (postLogsTask != null && postLogsTask.getStatus() == AsyncTask.Status.RUNNING) {
             postLogsTask.cancel(true);
         }
@@ -71,11 +69,11 @@ class SmsApiCheckManager {
         postLogsTask.execute();
     }
 
-    void performReceivedStatusCheck() {
-        String cli = ""; // TODO initialise correctly
-        String ddi = "";
-        String random2 = "";
-        String random3 = "";
+    void performReceivedStatusCheck(VappSms vappSms) {
+        String cli = Vapp.getUserPhoneNumber(context);
+        String ddi = vappSms.getDeliveryNumber();
+        String random2 = vappSms.getRandomSegment2();
+        String random3 = vappSms.getRandomSegment3();
 
         if (receivedStatusTask != null && receivedStatusTask.getStatus() == AsyncTask.Status.RUNNING) {
             receivedStatusTask.cancel(true);

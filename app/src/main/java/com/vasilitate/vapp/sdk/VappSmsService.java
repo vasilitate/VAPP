@@ -1,12 +1,12 @@
 package com.vasilitate.vapp.sdk;
 
-import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -16,15 +16,15 @@ import android.widget.Toast;
 import com.vasilitate.vapp.R;
 import com.vasilitate.vapp.sdk.network.RemoteNetworkTaskListener;
 import com.vasilitate.vapp.sdk.network.VappRestClient;
+import com.vasilitate.vapp.sdk.network.request.PostLogsBody;
+import com.vasilitate.vapp.sdk.network.request.PostLogsRequestTask;
 import com.vasilitate.vapp.sdk.network.response.BaseResponse;
 import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
 
-import static android.telephony.SmsManager.RESULT_ERROR_GENERIC_FAILURE;
-import static android.telephony.SmsManager.RESULT_ERROR_NO_SERVICE;
-import static android.telephony.SmsManager.RESULT_ERROR_NULL_PDU;
-import static android.telephony.SmsManager.RESULT_ERROR_RADIO_OFF;
+import java.util.List;
+
 import static com.vasilitate.vapp.sdk.VappActions.ACTION_SMS_PROGRESS;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_ERROR_MESSAGE;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_PRODUCT_ID;
@@ -60,8 +60,6 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     private VappProduct currentProduct;
     private boolean testMode;
 
-    private SmsSentReceiver smsSentReceiver;
-    private SmsDeliveredReceiver smsDeliveredReceiver;
     private CancelPaymentReceiver cancelPaymentReceiver;
 
     private final Handler completionHandler = new Handler();
@@ -71,6 +69,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     private final VappDbHelper vappDbHelper;
     private SmsSendManager smsSendManager;
     private SmsApiCheckManager smsApiCheckManager;
+    private PostLogsRequestTask postHistoricalLogsTask;
 
     public VappSmsService() {
         vappDbHelper = new VappDbHelper(this);
@@ -78,10 +77,31 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public int onStartCommand(final Intent intent, int flags, int startId) {
         testMode = VappConfiguration.isTestMode(this);
         setupReceivers();
-        handleStartCommand(intent);
+
+        // check if an existing product has not been logged to the server yet
+
+        if (vappDbHelper.retrieveSentSmsLogs().isEmpty()) {
+            handleStartCommand(intent);
+        }
+        else {
+            PostLogsBody body;
+
+            if (postHistoricalLogsTask != null && postHistoricalLogsTask.getStatus() == AsyncTask.Status.RUNNING) {
+                postHistoricalLogsTask.cancel(true);
+            }
+
+            postHistoricalLogsTask = new PostLogsRequestTask(restClient, retrieveSmsLogs());
+            postHistoricalLogsTask.setRequestListener(new ResponseHandler<PostLogsResponse>() {
+                @Override public void onRequestSuccess(PostLogsResponse result) {
+                    vappDbHelper.clearSentSmsLogs();
+                    handleStartCommand(intent);
+                }
+            });
+            postHistoricalLogsTask.execute();
+        }
         return START_STICKY;
     }
 
@@ -91,24 +111,15 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     private void setupReceivers() {
-        smsSentReceiver = new SmsSentReceiver();
-        smsDeliveredReceiver = new SmsDeliveredReceiver();
+        smsSendManager.setupReceivers();
         cancelPaymentReceiver = new CancelPaymentReceiver();
-
-        registerReceiver(smsSentReceiver, new IntentFilter(INTENT_SMS_SENT));
-        registerReceiver(smsDeliveredReceiver, new IntentFilter(INTENT_SMS_DELIVERED));
         registerReceiver(cancelPaymentReceiver, new IntentFilter(INTENT_CANCEL_PAYMENT));
     }
 
     @Override
     public void onDestroy() {
-        if (smsSentReceiver != null) {
-            unregisterReceiver(smsSentReceiver);
-            smsSentReceiver = null;
-        }
-        if (smsDeliveredReceiver != null) {
-            unregisterReceiver(smsDeliveredReceiver);
-            smsDeliveredReceiver = null;
+        if (smsSendManager != null) {
+            smsSendManager.destroy();
         }
         if (cancelPaymentReceiver != null) {
             unregisterReceiver(cancelPaymentReceiver);
@@ -157,6 +168,11 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
         }
     }
 
+
+    /*
+     * Handle Api Logic
+     */
+
     private void setupApiCheckManager() { // handles successful responses from API
         smsApiCheckManager = new SmsApiCheckManager(restClient, this,
 
@@ -193,14 +209,27 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                             receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck);
                             receivedStatusHandler.postDelayed(retryReceivedStatusCheck, POST_LOG_DELAY);
                         }
-                        else { // completed purchase
-                            // TODO handle finish
+                        else { // completed purchase!!!
+
+                            // Delay the sending of the completion so that any clients can display
+                            // the completion of the purchase.
+                            completionHandler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    terminateService();
+                                }
+                            }, 2000);
                         }
                     }
                 });
     }
 
-    // SmsSendListener
+
+    /*
+     * Handle Sms Logic
+     */
+
+
     @Override public void onSmsProgressUpdate(int progressPercentage) {
         broadcastProgressPercentage(progressPercentage);
     }
@@ -210,27 +239,49 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
         broadcastProgress(currentSmsIndex, progressPercentage);
 
         if (progressPercentage == 100) { // send log of all sent sms to server
-            smsApiCheckManager.performPostLogsCall(vappDbHelper.retrieveSentSmsLogs());
-
-            // Delay the sending of the completion so that any clients can display
-            // the completion of the purchase.
-            completionHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    terminateService();
-                }
-            }, 2000);
+            smsApiCheckManager.performPostLogsCall(retrieveSmsLogs());
         }
     }
-
 
     @Override public void onSmsSendError(String message) {
         broadcastSMSError(message);
     }
 
+    @Override public void onSmsDeliverySuccess() {
+        int smsIndex = smsSendManager.getCurrentSmsIndex();
+        smsSendManager.notifySmsDelivered();
+
+        if (smsIndex == 0) {
+            // should check that the server received delivery notification from telco
+            smsApiCheckManager.performPostLogsCall(retrieveSmsLogs());
+        }
+        else {
+            smsSendManager.sendSMSForCurrentProduct();
+        }
+    }
+
+    @Override public void onSmsDeliveryFailure() {
+        broadcastSMSError(getString(R.string.vapp_sms_delivery_failure));
+    }
+
+    @Override public void onSmsSendComplete(Integer errorResId) {
+        if (errorResId != null) {
+            broadcastSMSError(getString(errorResId));
+        }
+    }
+
+    private PostLogsBody retrieveSmsLogs() {
+        List<PostLogsBody.LogEntry> entryList = vappDbHelper.retrieveSentSmsLogs();
+        String cli = Vapp.getUserPhoneNumber(this);
+        String cliDetail = Vapp.getOriginatingNetworkName(this);
+        return new PostLogsBody(entryList, cli, cliDetail);
+    }
+
+
     /**
      * Handle broadcasts
      **/
+
 
     private void broadcastProgress(int smsSentCount, int progressPercentage) {
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
@@ -279,6 +330,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
         cancelPayment(this);
     }
 
+
     private class CancelPaymentReceiver extends BroadcastReceiver {
         @Override public void onReceive(Context context, Intent intent) {
             Log.d("Vapp", "Cancelling payment");
@@ -300,65 +352,9 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
         }
     }
 
-    private class SmsSentReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            Integer errorResId = null;
-            switch (getResultCode()) {
-                case Activity.RESULT_OK:
-                    // Nothing to do - only marking off the SMS when we know it's been
-                    // Delivered
-                    break;
-                case RESULT_ERROR_GENERIC_FAILURE:
-                    errorResId = R.string.vapp_sms_sent_failure_generic;
-                    break;
-                case RESULT_ERROR_NO_SERVICE:
-                    errorResId = R.string.vapp_sms_sent_failure_no_service;
-                    break;
-                case RESULT_ERROR_NULL_PDU:
-                    errorResId = R.string.vapp_sms_sent_failure_null_pdu;
-                    break;
-                case RESULT_ERROR_RADIO_OFF:
-                    errorResId = R.string.vapp_sms_sent_failure_radio_off;
-                    break;
-            }
-            if (errorResId != null) {
-                broadcastSMSError(getString(errorResId));
-            }
-        }
-    }
-
-    private class SmsDeliveredReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            switch (getResultCode()) {
-                case Activity.RESULT_OK:
-                    handleSmsDeliverySuccess();
-                    break;
-                case Activity.RESULT_CANCELED:
-                    broadcastSMSError(getString(R.string.vapp_sms_delivery_failure));
-                    break;
-            }
-        }
-
-        private void handleSmsDeliverySuccess() {
-            int smsIndex = smsSendManager.getCurrentSmsIndex();
-            smsSendManager.notifySmsDelivered();
-
-            if (smsIndex == 0) {
-                // should check that the server received delivery notification from telco
-                smsApiCheckManager.performPostLogsCall(vappDbHelper.retrieveSentSmsLogs());
-            }
-            else {
-                smsSendManager.sendSMSForCurrentProduct();
-            }
-        }
-    }
-
     private final Runnable retryReceivedStatusCheck = new Runnable() {
         @Override public void run() {
-            smsApiCheckManager.performReceivedStatusCheck();
+            smsApiCheckManager.performReceivedStatusCheck(smsSendManager.getCurrentSmsMessage());
         }
     };
 

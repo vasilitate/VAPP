@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
 import com.vasilitate.vapp.R;
@@ -443,22 +444,30 @@ public abstract class Vapp {
         return billingRouteMap.get(normalisedNetwork);
     }
 
-    static String getGeneratedSmsForProduct(Context context,
-                                            VappProduct product,
-                                            int smsCount,
-                                            int smsIndex) throws VappException {
+    static VappSms generateSmsForProduct(Context context,
+                                        VappProduct product,
+                                        int smsCount,
+                                        int smsIndex) throws VappException {
 
         String imei = getDeviceStateContract(context).getPhoneImei();
         String originatingNetworkName = getOriginatingNetworkName(context);
         String originatingNetworkCountry = getOriginatingNetworkCountry(context);
-        return VappSmsGenerator.generateSms(appVappId,
+        String deliveryNumber = VappProductManager.getRandomNumberInRange(Vapp.getDestinationNumberRange());
+
+        return new VappSms(appVappId,
                 product.getProductId(),
                 smsCount,
                 smsIndex,
                 imei,
                 isRoaming(context),
                 originatingNetworkName,
-                originatingNetworkCountry);
+                originatingNetworkCountry,
+                deliveryNumber);
+    }
+
+    @Nullable static String getUserPhoneNumber(Context context) {
+        TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        return tm.getLine1Number();
     }
 
     static VappProduct getProduct(String productId) throws VappException {
@@ -494,6 +503,7 @@ public abstract class Vapp {
 
     /**
      * Returns the MCC for the current operator
+     *
      * @param context the current context
      * @return the mcc
      * @throws VappException
@@ -510,11 +520,12 @@ public abstract class Vapp {
 
     /**
      * Returns the MNC for the current operator
+     *
      * @param context the current context
      * @return the mnc
      * @throws VappException
      */
-    @Nullable static String getmobileNetworkCode(Context context) throws VappException {
+    @Nullable static String getMobileNetworkCode(Context context) throws VappException {
         checkIfInitialised();
         String hni = getOriginatingNetwork(context);
 

@@ -11,6 +11,10 @@ import com.vasilitate.vapp.sdk.network.request.PostLogsBody;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Provides a DB Helper, which is used to temporarily persist sent messages in a local DB,
+ * before they are sent via REST API to a server and removed.
+ */
 class VappDbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "vapp.db";
@@ -25,9 +29,11 @@ class VappDbHelper extends SQLiteOpenHelper {
     }
 
     @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
     }
 
+    /**
+     * Defines the SmsEntry table schema.
+     */
     static abstract class SmsEntry implements BaseColumns {
         public static final String TABLE_NAME = "sms_entry";
         public static final String COLUMN_NAME_MESSAGE = "message";
