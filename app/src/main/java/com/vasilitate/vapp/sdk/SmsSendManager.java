@@ -186,6 +186,10 @@ class SmsSendManager {
         return currentSmsIndex;
     }
 
+    boolean hasFinished() {
+        return !(currentSmsIndex < currentProduct.getRequiredSmsCount());
+    }
+
     /**
      * Sends off a queued SMS to VAPP, callback is delivered via PendingIntents in the service.
      */

@@ -65,7 +65,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     private CancelPaymentReceiver cancelPaymentReceiver;
 
     private final Handler completionHandler = new Handler();
-    private final Handler networkHandler = new Handler();
+    private final Handler receivedStatusHandler = new Handler();
 
     private final VappRestClient restClient;
     private final VappDbHelper vappDbHelper;
@@ -176,8 +176,8 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                             smsSendManager.sendSMSForCurrentProduct(); // all ok, send any remaining texts
                         }
                         else if (GetReceivedStatusResponse.RECEIVED_STATUS_NOT_YET.equals(result.getStatus())) {
-                            networkHandler.removeCallbacks(retryReceivedStatusCheck); // retry in 10s interval
-                            networkHandler.postDelayed(retryReceivedStatusCheck, NOT_YET_DELAY);
+                            receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck); // retry in 10s interval
+                            receivedStatusHandler.postDelayed(retryReceivedStatusCheck, NOT_YET_DELAY);
                         }
                         else {
                             handlePurchaseUnsupported();
@@ -188,12 +188,10 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                     @Override public void onRequestSuccess(PostLogsResponse result) {
                         vappDbHelper.clearSentSmsLogs();
 
-
-                        if (smsSendManager.getCurrentSmsIndex() >= 1) {
+                        if (smsSendManager.getCurrentSmsIndex() >= 1 && !smsSendManager.hasFinished()) {
                             // check that the server received delivery notification from telco
-
-                            // TODO delay X secs
-                            smsApiCheckManager.performReceivedStatusCheck();
+                            receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck);
+                            receivedStatusHandler.postDelayed(retryReceivedStatusCheck, POST_LOG_DELAY);
                         }
                         else { // completed purchase
                             // TODO handle finish
