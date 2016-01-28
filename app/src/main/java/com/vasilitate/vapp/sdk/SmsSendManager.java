@@ -202,11 +202,9 @@ class SmsSendManager {
         // The SMS has been delivered so move onto the next one (if
         // we have not reached the end).
         currentSmsIndex++; // Move onto the next message...
+        VappConfiguration.setSentSmsCountForProduct(context, currentProduct, currentSmsIndex);
 
-        if (!sendIntervals.isEmpty()) { // Store the progress...
-            VappConfiguration.setSentSmsCountForProduct(context, currentProduct, currentSmsIndex);
-        }
-        else {
+        if (hasFinished()) {
             completeSmsPurchase();
         }
     }
@@ -295,7 +293,7 @@ class SmsSendManager {
 
         int smsToSend = (totalSMSCount - sentCount);
 
-        for (int i = 1; i < smsToSend; i++) {
+        for (int i = 1; i <= smsToSend; i++) {
             int interval = VappProductManager.generateSMSSendInterval(context);
             sendIntervals.push(interval);
             secondsRemaining += interval;
