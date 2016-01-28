@@ -86,7 +86,7 @@ class VappSms {
         return randomSegment3;
     }
 
-    String getDeliveryNumber() {
+    public String getDeliveryNumber() {
         return deliveryNumber;
     }
 

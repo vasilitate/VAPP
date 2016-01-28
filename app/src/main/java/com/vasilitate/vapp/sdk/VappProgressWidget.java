@@ -41,8 +41,6 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
 	private TextView progressPercentageView;
 	private FontAwesomeText cancelButton;
 
-//	private int intervalStartDownCount;
-
 	private boolean hideError = false;
     private boolean percentageMode = true;
 

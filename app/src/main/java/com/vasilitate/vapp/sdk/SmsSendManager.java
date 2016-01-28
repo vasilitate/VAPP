@@ -176,7 +176,7 @@ class SmsSendManager {
             currentSmsMessage = Vapp.generateSmsForProduct(context, currentProduct, totalSMSCount, currentSmsIndex);
 
             if (testMode) { // mock sending of sms and proceed to next
-                Log.d(Vapp.TAG, "Test SMS: " + currentSmsMessage.getDeliveryNumber() + ": " + currentSmsMessage);
+                Log.d(Vapp.TAG, "Send Test SMS: " + currentSmsMessage.getDeliveryNumber() + ": " + currentSmsMessage);
 
                 if (sendListener != null) {
                     sendListener.onSmsDeliverySuccess();
@@ -288,8 +288,6 @@ class SmsSendManager {
         }
     }
 
-
-
     /**
      * Create random ms intervals to wait between sending messages
      */
@@ -301,7 +299,9 @@ class SmsSendManager {
         sendIntervals = new Stack<>();
         secondsRemaining = 0;
 
-        for (int i = 0; i < totalSMSCount - sentCount - 1; i++) {
+        int smsToSend = (totalSMSCount - sentCount) - 1;
+
+        for (int i = 0; i < smsToSend; i++) {
             int interval = VappProductManager.generateSMSSendInterval(context);
             sendIntervals.push(interval);
             secondsRemaining += interval;

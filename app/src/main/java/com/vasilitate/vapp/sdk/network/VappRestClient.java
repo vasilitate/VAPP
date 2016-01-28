@@ -124,7 +124,7 @@ public class VappRestClient implements VappRestApi {
         String address = combinePaths(endpoint, RESOURCE_RECEIVED_STATUS, cli, ddi, random2, random3);
         URL url = getUrlForAddress(address);
 
-        HttpURLConnection connection = createHttpConnection(url, HTTP_POST);
+        HttpURLConnection connection = createHttpConnection(url, HTTP_GET);
         String response = executeRequest(connection);
 
         if (TextUtils.isEmpty(response)) {
