@@ -48,9 +48,10 @@ public class VappRestClient implements VappRestApi {
     private final Gson gson;
     private boolean log = true;
 
-    public VappRestClient(String endpoint, String sdkKey) {
+    public VappRestClient(String endpoint, String sdkKey, boolean testMode) {
         this.endpoint = endpoint;
         this.sdkKey = sdkKey;
+        this.log = testMode;
         gson = new Gson();
     }
 

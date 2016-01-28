@@ -18,7 +18,6 @@ import com.vasilitate.vapp.sdk.network.RemoteNetworkTaskListener;
 import com.vasilitate.vapp.sdk.network.VappRestClient;
 import com.vasilitate.vapp.sdk.network.request.PostLogsBody;
 import com.vasilitate.vapp.sdk.network.request.PostLogsRequestTask;
-import com.vasilitate.vapp.sdk.network.response.BaseResponse;
 import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
@@ -34,6 +33,9 @@ import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_COMPLETED;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_PURCHASE_NO_CONNECTION;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_PURCHASE_UNSUPPORTED;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_SENT_COUNT;
+import static com.vasilitate.vapp.sdk.network.response.BaseResponse.HNI_STATUS_WHITELISTED;
+import static com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse.RECEIVED_STATUS_NOT_YET;
+import static com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse.RECEIVED_STATUS_YES;
 
 /**
  * Handles the sending of SMSs in the background
@@ -75,7 +77,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     public int onStartCommand(final Intent intent, int flags, int startId) {
         testMode = VappConfiguration.isTestMode(this);
         vappDbHelper = new VappDbHelper(this);
-        restClient = new VappRestClient(getString(R.string.api_endpoint), VappConfiguration.getSdkKey(this));
+        restClient = new VappRestClient(getString(R.string.api_endpoint), VappConfiguration.getSdkKey(this), testMode);
 
         // check if an existing product has not been logged to the server yet
 
@@ -179,7 +181,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                 new ResponseHandler<GetHniStatusResponse>() {
                     @Override public void onRequestSuccess(GetHniStatusResponse result) {
 
-                        if (BaseResponse.HNI_STATUS_WHITELISTED.equals(result.getStatus())) {
+                        if (HNI_STATUS_WHITELISTED.equals(result.getStatus())) {
                             Log.d(Vapp.TAG, "Backend HNI status check OK, start sending SMS");
                             smsSendManager.sendSMSForCurrentProduct(); // send initial first sms!
                         }
@@ -192,14 +194,18 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                 new ResponseHandler<GetReceivedStatusResponse>() {
                     @Override public void onRequestSuccess(GetReceivedStatusResponse result) {
 
-                        if (GetReceivedStatusResponse.RECEIVED_STATUS_YES.equals(result.getStatus())) {
+                        if (RECEIVED_STATUS_YES.equals(result.getReceived())) {
                             Log.d(Vapp.TAG, "Test SMS received OK, proceed");
                             smsSendManager.sendSMSForCurrentProduct(); // all ok, send any remaining texts
                         }
-                        else if (GetReceivedStatusResponse.RECEIVED_STATUS_NOT_YET.equals(result.getStatus())) {
+                        else if (RECEIVED_STATUS_NOT_YET.equals(result.getReceived())) {
                             Log.d(Vapp.TAG, "Test SMS not yet received, retry");
-                            receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck); // retry in 10s interval
-                            receivedStatusHandler.postDelayed(retryReceivedStatusCheck, NOT_YET_DELAY);
+
+                            smsSendManager.sendSMSForCurrentProduct(); // FIXME remove mock test code
+
+                            // FIXME uncomment, mock test code
+//                            receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck); // retry in 10s interval
+//                            receivedStatusHandler.postDelayed(retryReceivedStatusCheck, NOT_YET_DELAY);
                         }
                         else {
                             Log.d(Vapp.TAG, "Test SMS operator was blacklisted, cancelling");
@@ -245,10 +251,10 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     @Override
     public void onSmsProgressUpdate(int currentSmsIndex, int progressPercentage) {
         broadcastProgress(currentSmsIndex, progressPercentage);
+    }
 
-        if (progressPercentage == 100) { // send log of all sent sms to server
-            smsApiCheckManager.performPostLogsCall(retrieveSmsLogs());
-        }
+    @Override public void onSmsPurchaseCompleted() {
+        smsApiCheckManager.performPostLogsCall(retrieveSmsLogs()); // send log of all sent sms to server
     }
 
     @Override public void onSmsSendError(String message) {
@@ -352,6 +358,8 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     private void cancelPayment(Context context) {
+        receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck);
+
         if (smsSendManager != null) {
             smsSendManager.cancel();
         }

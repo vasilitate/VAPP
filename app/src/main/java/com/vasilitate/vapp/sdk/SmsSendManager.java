@@ -60,6 +60,7 @@ class SmsSendManager {
         void onSmsDeliverySuccess();
         void onSmsDeliveryFailure();
         void onSmsSendComplete(Integer errorResId);
+        void onSmsPurchaseCompleted();
     }
 
     private VappProduct currentProduct;
@@ -109,7 +110,6 @@ class SmsSendManager {
         // Ensure there are still SMSs to send.  If not (e.g. after a re-start?) mark the
         // current product as bought...
         if (sendIntervals.isEmpty()) {
-            completeSmsPurchase();
             return;
         }
 
@@ -284,7 +284,7 @@ class SmsSendManager {
         Vapp.addRedeemedProduct(context, currentProduct);
 
         if (sendListener != null) {
-            sendListener.onSmsProgressUpdate(currentProduct.getRequiredSmsCount(), 100);
+            sendListener.onSmsPurchaseCompleted();
         }
     }
 
