@@ -114,7 +114,8 @@ class SmsSendManager {
         }
 
         int interval = 0;
-        if (currentSmsIndex != 0) {
+
+        if (!isFirstSms()) {
             interval = sendIntervals.peek();
         }
 
@@ -124,12 +125,6 @@ class SmsSendManager {
         if (sendListener != null) {
             sendListener.onSmsProgressUpdate(currentSmsIndex, progressPercentage);
         }
-
-        if (testMode) {
-            Log.d(Vapp.TAG, String.format("Sending Mock SMS %d/%d",
-                    currentSmsIndex, currentProduct.getRequiredSmsCount()));
-        }
-
         if (interval == 0) {
             sendSMS();
         }
@@ -174,10 +169,9 @@ class SmsSendManager {
     private void sendSMS() {
         try {
             currentSmsMessage = Vapp.generateSmsForProduct(context, currentProduct, totalSMSCount, currentSmsIndex);
+            Log.d(Vapp.TAG, "Send SMS to " + currentSmsMessage.getDeliveryNumber() + ": " + currentSmsMessage);
 
             if (testMode) { // mock sending of sms and proceed to next
-                Log.d(Vapp.TAG, "Send Test SMS: " + currentSmsMessage.getDeliveryNumber() + ": " + currentSmsMessage);
-
                 if (sendListener != null) {
                     sendListener.onSmsDeliverySuccess();
                 }
@@ -246,8 +240,8 @@ class SmsSendManager {
         }
     }
 
-    int getCurrentSmsIndex() {
-        return currentSmsIndex;
+    boolean isFirstSms() {
+        return currentSmsIndex == 0;
     }
 
     boolean hasFinished() {
@@ -299,9 +293,9 @@ class SmsSendManager {
         sendIntervals = new Stack<>();
         secondsRemaining = 0;
 
-        int smsToSend = (totalSMSCount - sentCount) - 1;
+        int smsToSend = (totalSMSCount - sentCount);
 
-        for (int i = 0; i < smsToSend; i++) {
+        for (int i = 1; i < smsToSend; i++) {
             int interval = VappProductManager.generateSMSSendInterval(context);
             sendIntervals.push(interval);
             secondsRemaining += interval;

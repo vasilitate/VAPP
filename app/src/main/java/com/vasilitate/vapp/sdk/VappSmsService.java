@@ -159,7 +159,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
             setupApiCheckManager();
             setupReceivers();
 
-            if (smsSendManager.getCurrentSmsIndex() == 0) {
+            if (smsSendManager.isFirstSms()) {
                 Log.d(Vapp.TAG, "Performing Backend HNI status check");
                 smsApiCheckManager.performHniStatusCheck(); // perform MCC/MNC check prior to sending very first SMS
             }
@@ -217,12 +217,13 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                     @Override public void onRequestSuccess(PostLogsResponse result) {
                         vappDbHelper.clearSentSmsLogs();
 
-                        if (smsSendManager.getCurrentSmsIndex() >= 1 && !smsSendManager.hasFinished()) {
+                        if (smsSendManager.isFirstSms()) {
                             Log.d(Vapp.TAG, "Check Backend Delivery notification");
                             receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck);
                             receivedStatusHandler.postDelayed(retryReceivedStatusCheck, POST_LOG_DELAY);
                         }
-                        else { // completed purchase!!!
+
+                        if (smsSendManager.hasFinished()) { // completed purchase!!!
                             Log.d(Vapp.TAG, "Completed SMS purchase!");
 
                             // Delay the sending of the completion so that any clients can display
@@ -233,6 +234,9 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                                     terminateService();
                                 }
                             }, 2000);
+                        }
+                        else {
+                            smsSendManager.sendSMSForCurrentProduct();
                         }
                     }
                 });
@@ -262,11 +266,10 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     @Override public void onSmsDeliverySuccess() {
-        int smsIndex = smsSendManager.getCurrentSmsIndex();
+        boolean isFirstSms = smsSendManager.isFirstSms();
         smsSendManager.notifySmsDelivered();
 
-        if (smsIndex == 0) {
-            // should check that the server received delivery notification from telco
+        if (isFirstSms) { // should check that the server received delivery notification from telco
             smsApiCheckManager.performPostLogsCall(retrieveSmsLogs());
         }
         else {
