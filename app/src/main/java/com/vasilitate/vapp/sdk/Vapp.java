@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
  */
 public abstract class Vapp {
 
+    public static final String TAG = "VAPP";
+
     static final int MAX_SMS_LIMIT = 200;
 
     private static final Pattern ALPHANUMERIC_PATTERN = Pattern.compile("[a-zA-Z0-9]{1,15}");
@@ -445,9 +447,9 @@ public abstract class Vapp {
     }
 
     static VappSms generateSmsForProduct(Context context,
-                                        VappProduct product,
-                                        int smsCount,
-                                        int smsIndex) throws VappException {
+                                         VappProduct product,
+                                         int smsCount,
+                                         int smsIndex) throws VappException {
 
         String imei = getDeviceStateContract(context).getPhoneImei();
         String originatingNetworkName = getOriginatingNetworkName(context);
@@ -467,18 +469,17 @@ public abstract class Vapp {
 
     @Nullable static String getUserPhoneNumber(Context context) {
         TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        return tm.getLine1Number();
+        String cli = "+447774532889"; // FIXME PLACEHOLDER
+        return cli;
     }
 
     static VappProduct getProduct(String productId) throws VappException {
-
         for (VappProduct product : productList) {
 
             if (product.getProductId().equals(productId)) {
                 return product;
             }
         }
-
         return null;
     }
 

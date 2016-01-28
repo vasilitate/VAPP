@@ -1,5 +1,6 @@
 package com.vasilitate.vapp.sdk.network.request;
 
+import com.vasilitate.vapp.sdk.exceptions.VappApiException;
 import com.vasilitate.vapp.sdk.network.VappRestClient;
 import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
 
@@ -16,7 +17,7 @@ public class GetHniStatusRequestTask extends RemoteNetworkTask<GetHniStatusRespo
         this.mnc = mnc;
     }
 
-    @Override protected GetHniStatusResponse performApiCall() throws IOException {
+    @Override protected GetHniStatusResponse performApiCall() throws IOException, VappApiException {
         return restClient.getHniStatus(mcc, mnc);
     }
 }

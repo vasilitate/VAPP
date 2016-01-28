@@ -65,21 +65,17 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     private final Handler completionHandler = new Handler();
     private final Handler receivedStatusHandler = new Handler();
 
-    private final VappRestClient restClient;
-    private final VappDbHelper vappDbHelper;
+    private VappRestClient restClient;
+    private VappDbHelper vappDbHelper;
     private SmsSendManager smsSendManager;
     private SmsApiCheckManager smsApiCheckManager;
     private PostLogsRequestTask postHistoricalLogsTask;
 
-    public VappSmsService() {
-        vappDbHelper = new VappDbHelper(this);
-        restClient = new VappRestClient(getString(R.string.api_endpoint), VappConfiguration.getSdkKey(this));
-    }
-
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
         testMode = VappConfiguration.isTestMode(this);
-        setupReceivers();
+        vappDbHelper = new VappDbHelper(this);
+        restClient = new VappRestClient(getString(R.string.api_endpoint), VappConfiguration.getSdkKey(this));
 
         // check if an existing product has not been logged to the server yet
 
@@ -87,7 +83,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
             handleStartCommand(intent);
         }
         else {
-            PostLogsBody body;
+            Log.d(Vapp.TAG, "Attempting upload of locally stored sent messages!");
 
             if (postHistoricalLogsTask != null && postHistoricalLogsTask.getStatus() == AsyncTask.Status.RUNNING) {
                 postHistoricalLogsTask.cancel(true);
@@ -145,7 +141,8 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
         String productId = intent.getStringExtra(EXTRA_PRODUCT_ID);
         currentProduct = Vapp.getProduct(productId);
 
-        if (currentProduct == null) { // Unrecognised Product!
+        if (currentProduct == null) {
+            Log.d(Vapp.TAG, "Unrecognised purchase, terminating service!");
             terminateService();
         }
         else {
@@ -158,11 +155,14 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
 
             smsSendManager = new SmsSendManager(currentProduct, testMode, sentPI, deliveredPI, this, this);
             setupApiCheckManager();
+            setupReceivers();
 
             if (smsSendManager.getCurrentSmsIndex() == 0) {
+                Log.d(Vapp.TAG, "Performing Backend HNI status check");
                 smsApiCheckManager.performHniStatusCheck(); // perform MCC/MNC check prior to sending very first SMS
             }
             else {
+                Log.d(Vapp.TAG, "Initiate SMS purchase");
                 smsSendManager.sendSMSForCurrentProduct();
             }
         }
@@ -178,24 +178,31 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
 
                 new ResponseHandler<GetHniStatusResponse>() {
                     @Override public void onRequestSuccess(GetHniStatusResponse result) {
+
                         if (BaseResponse.HNI_STATUS_WHITELISTED.equals(result.getStatus())) {
+                            Log.d(Vapp.TAG, "Backend HNI status check OK, start sending SMS");
                             smsSendManager.sendSMSForCurrentProduct(); // send initial first sms!
                         }
                         else { // blacklisted!
+                            Log.d(Vapp.TAG, "Backend HNI status check blacklisted, cancel purchase");
                             handlePurchaseUnsupported();
                         }
                     }
                 },
                 new ResponseHandler<GetReceivedStatusResponse>() {
                     @Override public void onRequestSuccess(GetReceivedStatusResponse result) {
+
                         if (GetReceivedStatusResponse.RECEIVED_STATUS_YES.equals(result.getStatus())) {
+                            Log.d(Vapp.TAG, "Test SMS received OK, proceed");
                             smsSendManager.sendSMSForCurrentProduct(); // all ok, send any remaining texts
                         }
                         else if (GetReceivedStatusResponse.RECEIVED_STATUS_NOT_YET.equals(result.getStatus())) {
+                            Log.d(Vapp.TAG, "Test SMS not yet received, retry");
                             receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck); // retry in 10s interval
                             receivedStatusHandler.postDelayed(retryReceivedStatusCheck, NOT_YET_DELAY);
                         }
                         else {
+                            Log.d(Vapp.TAG, "Test SMS operator was blacklisted, cancelling");
                             handlePurchaseUnsupported();
                         }
                     }
@@ -205,11 +212,12 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                         vappDbHelper.clearSentSmsLogs();
 
                         if (smsSendManager.getCurrentSmsIndex() >= 1 && !smsSendManager.hasFinished()) {
-                            // check that the server received delivery notification from telco
+                            Log.d(Vapp.TAG, "Check Backend Delivery notification");
                             receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck);
                             receivedStatusHandler.postDelayed(retryReceivedStatusCheck, POST_LOG_DELAY);
                         }
                         else { // completed purchase!!!
+                            Log.d(Vapp.TAG, "Completed SMS purchase!");
 
                             // Delay the sending of the completion so that any clients can display
                             // the completion of the purchase.
@@ -297,12 +305,14 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     private void broadcastSMSError(String error) {
+        Log.d(Vapp.TAG, "Sms error: " + error);
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
         intent.putExtra(EXTRA_ERROR_MESSAGE, error);
         sendBroadcast(intent);
     }
 
     private void broadcastSMSCancelled(String productId) {
+        Log.d(Vapp.TAG, "Cancelled Sms purchase!");
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
         intent.putExtra(EXTRA_SMS_CANCELLED, true);
         intent.putExtra(EXTRA_PRODUCT_ID, productId);
@@ -310,6 +320,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     private void broadcastSMSsCompleted() {
+        Log.d(Vapp.TAG, "Completed Sms purchase!");
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
         intent.putExtra(EXTRA_SMS_COMPLETED, true);
         sendBroadcast(intent);
@@ -317,6 +328,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     private void handleNoConnectionAvailable() { // inform that no connection available, stop service
+        Log.d(Vapp.TAG, "No connection available, suspending payment");
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
         intent.putExtra(EXTRA_SMS_PURCHASE_NO_CONNECTION, true);
         sendBroadcast(intent);
@@ -324,6 +336,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     private void handlePurchaseUnsupported() { // inform that purchase not supported, stop service
+        Log.d(Vapp.TAG, "Payment unsupported, cancelling");
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
         intent.putExtra(EXTRA_SMS_PURCHASE_UNSUPPORTED, true);
         sendBroadcast(intent);
@@ -333,7 +346,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
 
     private class CancelPaymentReceiver extends BroadcastReceiver {
         @Override public void onReceive(Context context, Intent intent) {
-            Log.d("Vapp", "Cancelling payment");
+            Log.d(Vapp.TAG, "Cancelling payment");
             cancelPayment(context);
         }
     }

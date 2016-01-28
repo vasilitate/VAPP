@@ -126,7 +126,7 @@ class SmsSendManager {
         }
 
         if (testMode) {
-            Log.d("VAPP!", String.format("Sending Mock SMS %d/%d",
+            Log.d(Vapp.TAG, String.format("Sending Mock SMS %d/%d",
                     currentSmsIndex, currentProduct.getRequiredSmsCount()));
         }
 
@@ -166,6 +166,36 @@ class SmsSendManager {
             }
         };
         countDownTimer.start();
+    }
+
+    /**
+     * Sends off a queued SMS to VAPP, callback is delivered via PendingIntents in the service.
+     */
+    private void sendSMS() {
+        try {
+            currentSmsMessage = Vapp.generateSmsForProduct(context, currentProduct, totalSMSCount, currentSmsIndex);
+
+            if (testMode) { // mock sending of sms and proceed to next
+                Log.d(Vapp.TAG, "Test SMS: " + currentSmsMessage.getDeliveryNumber() + ": " + currentSmsMessage);
+
+                if (sendListener != null) {
+                    sendListener.onSmsDeliverySuccess();
+                }
+            }
+            else {
+                SmsManager sms = SmsManager.getDefault();
+                sms.sendTextMessage(currentSmsMessage.getDeliveryNumber(),
+                        null,           // Call center number.
+                        currentSmsMessage.toString(),
+                        sentPI,
+                        deliveredPI);
+            }
+        }
+        catch (Exception e) {
+            if (sendListener != null) {
+                sendListener.onSmsSendError(e.getMessage());
+            }
+        }
     }
 
     /**
@@ -258,35 +288,7 @@ class SmsSendManager {
         }
     }
 
-    /**
-     * Sends off a queued SMS to VAPP, callback is delivered via PendingIntents in the service.
-     */
-    private void sendSMS() {
-        try {
-            currentSmsMessage = Vapp.generateSmsForProduct(context, currentProduct, totalSMSCount, currentSmsIndex);
 
-            if (testMode) { // mock sending of sms and proceed to next
-                Log.d("Vapp!", "Test SMS: " + currentSmsMessage.getDeliveryNumber() + ": " + currentSmsMessage);
-
-                if (sendListener != null) {
-                    sendListener.onSmsDeliverySuccess();
-                }
-            }
-            else {
-                SmsManager sms = SmsManager.getDefault();
-                sms.sendTextMessage(currentSmsMessage.getDeliveryNumber(),
-                        null,           // Call center number.
-                        currentSmsMessage.toString(),
-                        sentPI,
-                        deliveredPI);
-            }
-        }
-        catch (Exception e) {
-            if (sendListener != null) {
-                sendListener.onSmsSendError(e.getMessage());
-            }
-        }
-    }
 
     /**
      * Create random ms intervals to wait between sending messages
@@ -310,9 +312,8 @@ class SmsSendManager {
     private class SmsSentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-
-
             Integer errorResId = null;
+
             switch (getResultCode()) {
                 case Activity.RESULT_OK:
                     // Nothing to do - only marking off the SMS when we know it's been

@@ -1,5 +1,6 @@
 package com.vasilitate.vapp.sdk.network.request;
 
+import com.vasilitate.vapp.sdk.exceptions.VappApiException;
 import com.vasilitate.vapp.sdk.network.VappRestClient;
 import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
 
@@ -20,7 +21,7 @@ public class GetReceivedStatusRequestTask extends RemoteNetworkTask<GetReceivedS
         this.random3 = random3;
     }
 
-    @Override protected GetReceivedStatusResponse performApiCall() throws IOException {
+    @Override protected GetReceivedStatusResponse performApiCall() throws IOException, VappApiException {
         return restClient.getReceivedStatus(cli, ddi, random2, random3);
     }
 }

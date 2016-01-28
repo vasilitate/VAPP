@@ -3,6 +3,7 @@ package com.vasilitate.vapp.sdk.network.request;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.vasilitate.vapp.sdk.exceptions.VappApiException;
 import com.vasilitate.vapp.sdk.network.RemoteNetworkTaskListener;
 import com.vasilitate.vapp.sdk.network.VappRestClient;
 
@@ -42,6 +43,10 @@ public abstract class RemoteNetworkTask<T> extends AsyncTask<Void, Void, Void> {
             failure = true;
             Log.d(getClass().getName(), "Error performing IO for network request, probably not connected", e);
         }
+        catch (VappApiException e) {
+            failure = true;
+            Log.d(getClass().getName(), "API exception, perhaps the parameters below were incorrect?", e);
+        }
         return null;
     }
 
@@ -52,7 +57,7 @@ public abstract class RemoteNetworkTask<T> extends AsyncTask<Void, Void, Void> {
      * @return the response object
      * @throws IOException
      */
-    protected abstract T performApiCall() throws IOException;
+    protected abstract T performApiCall() throws IOException, VappApiException;
 
     @Override protected void onPostExecute(Void aVoid) {
         if (requestListener != null) {

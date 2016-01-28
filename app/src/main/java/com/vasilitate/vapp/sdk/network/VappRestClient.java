@@ -3,8 +3,10 @@ package com.vasilitate.vapp.sdk.network;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringDef;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.google.gson.Gson;
+import com.vasilitate.vapp.sdk.Vapp;
 import com.vasilitate.vapp.sdk.exceptions.VappApiException;
 import com.vasilitate.vapp.sdk.network.request.PostLogsBody;
 import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
@@ -23,7 +25,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A REST client which implements calls to the Vapp API.
@@ -43,6 +46,7 @@ public class VappRestClient implements VappRestApi {
     private final String endpoint;
     private final String sdkKey;
     private final Gson gson;
+    private boolean log = true;
 
     public VappRestClient(String endpoint, String sdkKey) {
         this.endpoint = endpoint;
@@ -70,9 +74,7 @@ public class VappRestClient implements VappRestApi {
     }
 
     private void validateParameter(String value, String paramName) {
-        if (TextUtils.isEmpty(value)) {
-            throw new VappApiException(String.format("Parameter '%s' cannot be empty.", paramName));
-        }
+        validateCliNumber(value);
     }
 
     @Override
@@ -80,6 +82,7 @@ public class VappRestClient implements VappRestApi {
         if (logs == null || logs.getLogs().isEmpty()) {
             throw new VappApiException("Cannot send empty logs to server!");
         }
+        validateCliNumber(logs.getCli());
 
         String address = combinePaths(endpoint, RESOURCE_LOGS);
         URL url = getUrlForAddress(address);
@@ -96,12 +99,19 @@ public class VappRestClient implements VappRestApi {
         }
     }
 
+    private void validateCliNumber(String cli) {
+        if (TextUtils.isEmpty(cli)) {
+            throw new VappApiException("User number (CLI) is empty, cannot post logs!");
+        }
+    }
+
     @Override
     public GetReceivedStatusResponse getReceivedStatus(String cli, String ddi, String random2, String random3) throws VappApiException, IOException {
         validateParameter(cli, "cli");
         validateParameter(ddi, "ddi");
         validateParameter(random2, "random2");
         validateParameter(random3, "random3");
+        validateCliNumber(cli);
 
         if (cli.startsWith(PostLogsBody.PLUS_SYMBOL)) {
             cli = cli.replace(PostLogsBody.PLUS_SYMBOL, "");
@@ -142,15 +152,19 @@ public class VappRestClient implements VappRestApi {
         return connection;
     }
 
-    private String executeRequest(URLConnection connection) throws IOException {
+    private String executeRequest(HttpURLConnection connection) throws IOException {
         return executeRequest(connection, null);
     }
 
-    private String executeRequest(URLConnection connection, String postBody) throws IOException {
+    private String executeRequest(HttpURLConnection connection, String postBody) throws IOException {
         InputStream is = null;
         DataOutputStream os = null;
         BufferedReader reader;
         String response = null;
+
+        if (log) {
+            logRequest(connection, postBody);
+        }
 
         try {
             if (!TextUtils.isEmpty(postBody)) { // send the POST body
@@ -187,7 +201,35 @@ public class VappRestClient implements VappRestApi {
                 }
             }
         }
+        if (log) {
+            logResponse(response);
+        }
         return response;
+    }
+
+    private void logRequest(HttpURLConnection connection, String postBody) {
+        Log.d(Vapp.TAG, String.format("%s %s", connection.getRequestMethod(), connection.getURL()));
+        Map<String, List<String>> requestProperties = connection.getRequestProperties();
+
+        for (String property : requestProperties.keySet()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(property);
+            sb.append(": ");
+
+            List<String> values = requestProperties.get(property);
+            for (String val : values) {
+                sb.append(val);
+            }
+            Log.d(Vapp.TAG, sb.toString());
+        }
+
+        if (postBody != null) {
+            Log.d(Vapp.TAG, postBody);
+        }
+    }
+
+    private void logResponse(String response) {
+        Log.d(Vapp.TAG, response);
     }
 
     @NonNull private URL getUrlForAddress(String address) throws VappApiException {
