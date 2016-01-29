@@ -6,6 +6,9 @@ import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
 
 import java.io.IOException;
 
+/**
+ * Calls GET /hnistatus in the background then calls a delegate on success/failure
+ */
 public class GetHniStatusRequestTask extends RemoteNetworkTask<GetHniStatusResponse> {
 
     private final String mcc;

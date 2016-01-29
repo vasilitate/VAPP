@@ -59,6 +59,10 @@ class SmsApiCheckManager {
         statusRequestTask.execute();
     }
 
+    /**
+     * Posts locally logged SMSs to the VAPP backend
+     * @param body the locally logged messages
+     */
     void performPostLogsCall(PostLogsBody body) {
         if (postLogsTask != null && postLogsTask.getStatus() == AsyncTask.Status.RUNNING) {
             postLogsTask.cancel(true);
@@ -69,8 +73,12 @@ class SmsApiCheckManager {
         postLogsTask.execute();
     }
 
+    /**
+     * Checks that a delivery notification has been received by the VAPP backend for a previously
+     * logged sms
+     * @param vappSms the vapp sms
+     */
     void performReceivedStatusCheck(VappSms vappSms) {
-        String cli = Vapp.getUserPhoneNumber(context);
         String ddi = vappSms.getDeliveryNumber();
         String random2 = vappSms.getRandomSegment2();
         String random3 = vappSms.getRandomSegment3();

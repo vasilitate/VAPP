@@ -5,7 +5,9 @@ import com.vasilitate.vapp.sdk.network.VappRestClient;
 import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
 
 import java.io.IOException;
-
+/**
+ * Calls GET /receivedstatus in the background then calls a delegate on success/failure
+ */
 public class GetReceivedStatusRequestTask extends RemoteNetworkTask<GetReceivedStatusResponse> {
 
     private final String ddi;

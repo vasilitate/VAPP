@@ -5,7 +5,9 @@ import com.vasilitate.vapp.sdk.network.VappRestClient;
 import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
 
 import java.io.IOException;
-
+/**
+ * Calls Post /logs in the background then calls a delegate on success/failure
+ */
 public class PostLogsRequestTask extends RemoteNetworkTask<PostLogsResponse> {
 
     private final PostLogsBody body;
