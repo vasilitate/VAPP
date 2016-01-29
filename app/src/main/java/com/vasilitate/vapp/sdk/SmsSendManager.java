@@ -4,11 +4,9 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.CountDownTimer;
 import android.telephony.SmsManager;
 import android.util.Log;
@@ -22,7 +20,6 @@ import static android.telephony.SmsManager.RESULT_ERROR_GENERIC_FAILURE;
 import static android.telephony.SmsManager.RESULT_ERROR_NO_SERVICE;
 import static android.telephony.SmsManager.RESULT_ERROR_NULL_PDU;
 import static android.telephony.SmsManager.RESULT_ERROR_RADIO_OFF;
-import static com.vasilitate.vapp.sdk.VappDbHelper.SmsEntry;
 
 /**
  * Manages the sending of SMS messages at random intervals.
@@ -81,7 +78,7 @@ class SmsSendManager {
     private final SmsSendListener sendListener;
     private final PendingIntent sentPI;
     private final PendingIntent deliveredPI;
-    private final SQLiteDatabase writableDatabase;
+    private final VappDbHelper vappDbHelper;
     private SmsSentReceiver smsSentReceiver;
     private SmsDeliveredReceiver smsDeliveredReceiver;
 
@@ -97,8 +94,7 @@ class SmsSendManager {
         this.serviceRef = new WeakReference<>(context);
         this.sendListener = sendListener;
 
-        VappDbHelper vappDbHelper = new VappDbHelper(this.context);
-        writableDatabase = vappDbHelper.getWritableDatabase();
+        vappDbHelper = new VappDbHelper(this.context);
         initialiseRandomSendIntervals();
     }
 
@@ -197,7 +193,7 @@ class SmsSendManager {
      * the DB records and check whether the purchase has been completed.
      */
     void notifySmsDelivered() {
-        insertSmsLogDbRecord();
+        vappDbHelper.insertSmsLogDbRecord(currentSmsMessage);
 
         // The SMS has been delivered so move onto the next one (if
         // we have not reached the end).
@@ -223,9 +219,6 @@ class SmsSendManager {
      * Closes the DB connection
      */
     void destroy() {
-        if (writableDatabase != null) {
-            writableDatabase.close();
-        }
         Service service = serviceRef.get();
 
         if (service != null && smsSentReceiver != null) {
@@ -257,18 +250,8 @@ class SmsSendManager {
         }
     }
 
-    public VappSms getCurrentSmsMessage() {
+    VappSms getCurrentSmsMessage() {
         return currentSmsMessage;
-    }
-
-    /**
-     * Inserts a record that an SMS was sent into the DB.
-     */
-    private void insertSmsLogDbRecord() {
-        ContentValues values = new ContentValues();
-        values.put(SmsEntry.COLUMN_NAME_MESSAGE, currentSmsMessage.toString());
-        values.put(SmsEntry.COLUMN_NAME_DDI, currentSmsMessage.getDeliveryNumber());
-        writableDatabase.insert(SmsEntry.TABLE_NAME, null, values);
     }
 
     private void completeSmsPurchase() {
@@ -294,7 +277,7 @@ class SmsSendManager {
         int smsToSend = (totalSMSCount - sentCount);
 
         for (int i = 1; i <= smsToSend; i++) {
-            int interval = VappProductManager.generateSMSSendInterval(context);
+            int interval = VappProductManager.generateSMSSendInterval(context, Vapp.getAllDeliveryNumbers().size());
             sendIntervals.push(interval);
             secondsRemaining += interval;
         }

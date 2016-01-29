@@ -10,7 +10,6 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.vasilitate.vapp.sdk.Vapp;
-import com.vasilitate.vapp.sdk.VappNumberRange;
 import com.vasilitate.vapp.sdk.VappProduct;
 import com.vasilitate.vapp.sdk.VappProgressReceiver;
 import com.vasilitate.vapp.sdk.VappProgressWidget;
@@ -42,7 +41,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             Vapp.initialise(this,
                             VAPP_APP_NAME,
                             VAPP_PRODUCTS,
-                            new VappNumberRange( "+447458830000", "+447458830009"),
                             true,     // Test mode - don't send SMSs
                             true,
                             "BG8R4X2PCXYCHRCRJTK6");

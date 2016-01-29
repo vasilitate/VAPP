@@ -3,10 +3,12 @@ package com.vasilitate.vapp.sdk;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.vasilitate.vapp.R;
 import com.vasilitate.vapp.sdk.exceptions.InvalidApplicationVappIdException;
@@ -18,6 +20,11 @@ import com.vasilitate.vapp.sdk.exceptions.InvalidVappProductException;
 import com.vasilitate.vapp.sdk.exceptions.NetworkNotSupportedException;
 import com.vasilitate.vapp.sdk.exceptions.VappException;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,8 +39,8 @@ public abstract class Vapp {
     public static final String TAG = "VAPP";
 
     static final int MAX_SMS_LIMIT = 200;
-
     private static final Pattern ALPHANUMERIC_PATTERN = Pattern.compile("[a-zA-Z0-9]{1,15}");
+    private static final String RESOURCE_FILE_NUMBERS_CSV = "vapp_numbers.csv";
 
     private static final long MIN_RANGE_START = 447458830000L;
     private static final long MAX_RANGE_START = 447458839999L;
@@ -42,8 +49,8 @@ public abstract class Vapp {
 
     private static String appVappId;
     private static List<VappProduct> productList;
+    private static List<String> deliveryNumbers;
     private static Map<String, String> billingRouteMap;
-    private static VappNumberRange destinationNumberRange;
 
     // All Vapp members are static so no need for a constructor.
     private Vapp() {
@@ -56,13 +63,12 @@ public abstract class Vapp {
      * <p/>
      * If this method is not called, the behaviour of other methods is undetermined.
      *
-     * @param context                the current context
-     * @param appVappId              the unique application Id (1 - 15 alpha-numeric characters (no spaces))
-     * @param products               a list of VappProduct objects, representing the available products
-     * @param destinationNumberRange range of destination numbers allocated by Vasilitate your App.
-     * @param testMode               false for default functionality, true to disable SMS sending for test purposes
-     * @param cancellableProducts    true if users should be able to cancel product purchases (default), false if not
-     * @param sdkKey                 the sdk key provided for your application.
+     * @param context             the current context
+     * @param appVappId           the unique application Id (1 - 15 alpha-numeric characters (no spaces))
+     * @param products            a list of VappProduct objects, representing the available products
+     * @param testMode            false for default functionality, true to disable SMS sending for test purposes
+     * @param cancellableProducts true if users should be able to cancel product purchases (default), false if not
+     * @param sdkKey              the sdk key provided for your application.
      * @throws InvalidApplicationVappIdException invalid application Vapp Id.
      * @throws InvalidProductIdException         invalid Product Id.
      * @throws InvalidVappNetworkException       invalid Vapp Network.
@@ -73,7 +79,6 @@ public abstract class Vapp {
     public static synchronized void initialise(Context context,
                                                String appVappId,
                                                List<VappProduct> products,
-                                               VappNumberRange destinationNumberRange,
                                                boolean testMode,
                                                boolean cancellableProducts,
                                                String sdkKey)
@@ -87,6 +92,8 @@ public abstract class Vapp {
         if (TextUtils.isEmpty(sdkKey)) {
             throw new VappException("Invalid value for SDK key - cannot be null!");
         }
+
+        readCsvNumbers(context);
 
         VappConfiguration.setTestMode(context, testMode);
         VappConfiguration.setCancellableProducts(context, cancellableProducts);
@@ -111,21 +118,55 @@ public abstract class Vapp {
             uniqueNames.put(name, true);
         }
         VappProductManager.addProducts(context, productList); // persist state
-
-        if (destinationNumberRange.getStartOfRange() >= MIN_RANGE_START
-                && destinationNumberRange.getEndOfRange() <= MAX_RANGE_START) {
-            Vapp.destinationNumberRange = destinationNumberRange;
-        }
-        else {
-            throw new InvalidVappNumberException(String.format("Invalid number range '%s'", destinationNumberRange));
-        }
-
         initialised = true;
 
         VappProduct productBeingPurchased = getProductBeingPurchased(context);
 
         if (productBeingPurchased != null) {
             startSMSService(context, productBeingPurchased.getProductId());
+        }
+    }
+
+    /**
+     * Reads delivery numbers from a csv configuration file and adds them to a list
+     *
+     * @param context the current context
+     */
+    private static void readCsvNumbers(Context context) throws VappException {
+        deliveryNumbers = new ArrayList<>();
+        AssetManager assets = context.getResources().getAssets();
+
+        InputStream is = null;
+        try {
+            is = assets.open(RESOURCE_FILE_NUMBERS_CSV);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (!TextUtils.isEmpty(line)) {
+                    deliveryNumbers.add(line.trim());
+                }
+            }
+            if (deliveryNumbers.isEmpty()) {
+                throw new VappException("No valid numbers detected in VAPP number configuration file." +
+                        "Please download a non-empty file from the VAPP developer console.");
+            }
+        }
+        catch (IOException e) {
+            String message = String.format("Error reading VAPP number configuration file '%s' - " +
+                    "please check that the file is present in your assets directory, or read the" +
+                    " Getting Started guide for more info.", RESOURCE_FILE_NUMBERS_CSV);
+            throw new VappException(message, e);
+        }
+        finally {
+            try {
+                if (is != null) {
+                    is.close();
+                }
+            }
+            catch (IOException e) {
+                Log.w(Vapp.TAG, "Error closing stream", e);
+            }
         }
     }
 
@@ -454,7 +495,7 @@ public abstract class Vapp {
         String imei = getDeviceStateContract(context).getPhoneImei();
         String originatingNetworkName = getOriginatingNetworkName(context);
         String originatingNetworkCountry = getOriginatingNetworkCountry(context);
-        String deliveryNumber = VappProductManager.getRandomNumberInRange(Vapp.getDestinationNumberRange());
+        String deliveryNumber = VappProductManager.getRandomDeliveryNumber(deliveryNumbers);
 
         return new VappSms(appVappId,
                 product.getProductId(),
@@ -543,15 +584,15 @@ public abstract class Vapp {
         VappConfiguration.setSentSmsCountForProduct(context, product, 0);
     }
 
-    static VappNumberRange getDestinationNumberRange() {
-        return destinationNumberRange;
-    }
-
     static void startSMSService(Context context, String productId) {
 
         Intent intent = new Intent(context, VappSmsService.class);
         intent.putExtra(VappActions.EXTRA_PRODUCT_ID, productId);
         context.startService(intent);
+    }
+
+    static List<String> getAllDeliveryNumbers() {
+        return deliveryNumbers;
     }
 
     private static DeviceStateContract getDeviceStateContract(Context context) throws VappException {

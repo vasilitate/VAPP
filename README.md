@@ -33,7 +33,7 @@ private static final String VAPP_APP_ID = "MyAppId";
 List<VappProduct> productList = new ArrayList<>();
 VappNumberRange vappNumberRange = new VappNumberRange("+447458830000", "+447458830009");
 
-Vapp.initialise(this, VAPP_APP_ID, productList, vappNumberRange, false);
+Vapp.initialise(this, VAPP_APP_ID, productList, false, false, MY_SDK_KEY);
 ```
 
 ### Defining Products

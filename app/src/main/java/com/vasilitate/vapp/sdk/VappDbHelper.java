@@ -1,5 +1,6 @@
 package com.vasilitate.vapp.sdk;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -78,6 +79,20 @@ class VappDbHelper extends SQLiteOpenHelper {
     void clearSentSmsLogs() {
         SQLiteDatabase writableDatabase = getWritableDatabase();
         writableDatabase.delete(SmsEntry.TABLE_NAME, null, null);
+        writableDatabase.close();
+    }
+
+    /**
+     * Inserts a log of an SMS into the DB
+     * @param sms the sms
+     */
+    void insertSmsLogDbRecord(VappSms sms) {
+        SQLiteDatabase writableDatabase = getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put(SmsEntry.COLUMN_NAME_MESSAGE, sms.toString());
+        values.put(SmsEntry.COLUMN_NAME_DDI, sms.getDeliveryNumber());
+        writableDatabase.insert(SmsEntry.TABLE_NAME, null, values);
         writableDatabase.close();
     }
 

@@ -3,11 +3,10 @@ package com.vasilitate.example.cases;
 import android.preference.PreferenceManager;
 import android.test.AndroidTestCase;
 
-import com.vasilitate.vapp.sdk.VappNumberRange;
-import com.vasilitate.vapp.sdk.exceptions.InvalidVappProductException;
-import com.vasilitate.vapp.sdk.exceptions.InvalidVappProgressException;
 import com.vasilitate.vapp.sdk.Vapp;
 import com.vasilitate.vapp.sdk.VappProduct;
+import com.vasilitate.vapp.sdk.exceptions.InvalidVappProductException;
+import com.vasilitate.vapp.sdk.exceptions.InvalidVappProgressException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +27,6 @@ public class PaymentProgressTest extends AndroidTestCase {
         Vapp.initialise(getContext(),
                 APP_NAME,
                 productList,
-                new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                 true,
                 true,
                 "BG8R4X2PCXYCHRCRJTK6");

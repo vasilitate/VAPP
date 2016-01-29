@@ -127,19 +127,22 @@ abstract class VappProductManager {
         }
     }
 
-
-    private static int getMaxSMSSendInterval( Context context ) {
-
-        final long rangeSize = Vapp.getDestinationNumberRange().getRangeSize();
-
+    /**
+     * Calculates the maximum interval between sending messages. If less numbers are available,
+     * the interval will increase.
+     * @param numberCount the count of delivery numbers available
+     * @return the max interval between sending SMS
+     */
+    private static int getMaxSMSSendInterval(int numberCount) {
         int maximumSendInterval;
-        if( rangeSize < 10 ) {
+
+        if( numberCount < 10 ) {
             maximumSendInterval = 60;
-        } else if( rangeSize < 50 ) {
+        } else if( numberCount < 50 ) {
             maximumSendInterval = 50;
-        } else if( rangeSize < 100 ) {
+        } else if( numberCount < 100 ) {
             maximumSendInterval = 40;
-        } else if( rangeSize < 1000 ) {
+        } else if( numberCount < 1000 ) {
             maximumSendInterval = 30;
         } else {
             maximumSendInterval = 20;
@@ -148,24 +151,23 @@ abstract class VappProductManager {
         return maximumSendInterval;
     }
 
-    static int generateSMSSendInterval( Context context ) {
-        int maximumSendInterval = getMaxSMSSendInterval(context);
+    static int generateSMSSendInterval(Context context, int numberCount) {
+        int maximumSendInterval = getMaxSMSSendInterval(numberCount);
         Random random = new Random();
         int sendInterval = MINIMUM_SMS_INTERVAL +
                 random.nextInt( maximumSendInterval - MINIMUM_SMS_INTERVAL );
 
         // Speed up the testing!
-        if (VappConfiguration.isTestMode(context) ) {
+        if (VappConfiguration.isTestMode(context)) {
             sendInterval /= 5;
         }
 
         return sendInterval;
     }
 
-    static String getRandomNumberInRange( VappNumberRange numberRange ) {
+    static String getRandomDeliveryNumber(List<String> numbers) {
         Random random = new Random();
-        long rangeSize = numberRange.getRangeSize();
-        long randomNumber = numberRange.getStartOfRange() + (Math.abs(random.nextLong()) % rangeSize);
-        return INTERNATIONAL_PREFIX + String.valueOf( randomNumber );
+        String deliveryNumber = numbers.get(random.nextInt(numbers.size()));
+        return INTERNATIONAL_PREFIX + deliveryNumber;
     }
 }
