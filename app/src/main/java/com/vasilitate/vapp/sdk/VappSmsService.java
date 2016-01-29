@@ -72,6 +72,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     private SmsSendManager smsSendManager;
     private SmsApiCheckManager smsApiCheckManager;
     private PostLogsRequestTask postHistoricalLogsTask;
+    private boolean shouldCheckReceivedStatus;
 
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
@@ -217,13 +218,12 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                     @Override public void onRequestSuccess(PostLogsResponse result) {
                         vappDbHelper.clearSentSmsLogs();
 
-                        if (smsSendManager.isFirstSmsInPurchase()) {
+                        if (shouldCheckReceivedStatus) {
                             Log.d(Vapp.TAG, "Check Backend Delivery notification");
                             receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck);
                             receivedStatusHandler.postDelayed(retryReceivedStatusCheck, POST_LOG_DELAY);
                         }
-
-                        if (smsSendManager.hasFinishedPurchase()) { // completed purchase!!!
+                        else if (smsSendManager.hasFinishedPurchase()) { // completed purchase!!!
                             Log.d(Vapp.TAG, "Completed SMS purchase!");
 
                             // Delay the sending of the completion so that any clients can display
@@ -266,10 +266,10 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     @Override public void onSmsDeliverySuccess() {
-        boolean isFirstSms = smsSendManager.isFirstSmsInPurchase();
+        shouldCheckReceivedStatus = smsSendManager.isFirstSmsInPurchase();
         smsSendManager.notifySmsDelivered();
 
-        if (isFirstSms) { // should check that the server received delivery notification from telco
+        if (shouldCheckReceivedStatus) { // should check that the server received delivery notification from telco
             smsApiCheckManager.performPostLogsCall(retrieveSmsLogs());
         }
         else {
