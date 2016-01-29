@@ -243,7 +243,7 @@ class SmsSendManager {
     }
 
     boolean isFirstSmsInPurchase() {
-        return currentSmsIndex == 0;
+        return currentSmsIndex <= 1;
     }
 
     boolean hasFinishedPurchase() {

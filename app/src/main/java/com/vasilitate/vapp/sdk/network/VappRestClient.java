@@ -75,7 +75,9 @@ public class VappRestClient implements VappRestApi {
     }
 
     private void validateParameter(String value, String paramName) {
-        validateCliNumber(value);
+        if (TextUtils.isEmpty(value)) {
+            throw new VappApiException(String.format("Param '%s' is invalid", paramName));
+        }
     }
 
     @Override
@@ -83,7 +85,6 @@ public class VappRestClient implements VappRestApi {
         if (logs == null || logs.getLogs().isEmpty()) {
             throw new VappApiException("Cannot send empty logs to server!");
         }
-        validateCliNumber(logs.getCli());
 
         String address = combinePaths(endpoint, RESOURCE_LOGS);
         URL url = getUrlForAddress(address);
@@ -100,28 +101,17 @@ public class VappRestClient implements VappRestApi {
         }
     }
 
-    private void validateCliNumber(String cli) {
-        if (TextUtils.isEmpty(cli)) {
-            throw new VappApiException("User number (CLI) is empty, cannot post logs!");
-        }
-    }
-
     @Override
-    public GetReceivedStatusResponse getReceivedStatus(String cli, String ddi, String random2, String random3) throws VappApiException, IOException {
-        validateParameter(cli, "cli");
+    public GetReceivedStatusResponse getReceivedStatus(String ddi, String random2, String random3) throws VappApiException, IOException {
         validateParameter(ddi, "ddi");
         validateParameter(random2, "random2");
         validateParameter(random3, "random3");
-        validateCliNumber(cli);
 
-        if (cli.startsWith(PostLogsBody.PLUS_SYMBOL)) {
-            cli = cli.replace(PostLogsBody.PLUS_SYMBOL, "");
-        }
         if (ddi.startsWith(PostLogsBody.PLUS_SYMBOL)) {
             ddi = ddi.replace(PostLogsBody.PLUS_SYMBOL, "");
         }
 
-        String address = combinePaths(endpoint, RESOURCE_RECEIVED_STATUS, cli, ddi, random2, random3);
+        String address = combinePaths(endpoint, RESOURCE_RECEIVED_STATUS, ddi, random2, random3);
         URL url = getUrlForAddress(address);
 
         HttpURLConnection connection = createHttpConnection(url, HTTP_GET);

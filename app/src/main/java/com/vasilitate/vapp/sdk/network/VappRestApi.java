@@ -40,14 +40,12 @@ public interface VappRestApi {
     /**
      * Gets whether the server has received an SMS delivery notification from a 3rd party telco.
      *
-     * @param cli     the calling line identity
      * @param ddi     the destination number
      * @param random2 random hex uniquely identifying a message
      * @param random3 random hex uniquely identifying a message
      * @return a {@link BaseResponse}
      */
-    GetReceivedStatusResponse getReceivedStatus(String cli,
-                                                String ddi,
+    GetReceivedStatusResponse getReceivedStatus(String ddi,
                                                 String random2,
                                                 String random3) throws VappApiException, IOException;
 

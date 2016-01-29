@@ -24,6 +24,10 @@ public final class PostLogsBody {
         this.logs = logs;
         this.cliDetail = cliDetail;
 
+        if (cli == null) {
+            cli = "";
+        }
+
         if (cli.startsWith(PLUS_SYMBOL)) {
             this.cli = cli.replace(PLUS_SYMBOL, "");
         }

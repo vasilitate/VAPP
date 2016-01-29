@@ -80,7 +80,7 @@ class SmsApiCheckManager {
         }
 
         receivedStatusTask = new GetReceivedStatusRequestTask(restClient,
-                cli, ddi, random2, random3);
+                ddi, random2, random3);
 
         receivedStatusTask.setRequestListener(receivedStatusResponseListener);
         receivedStatusTask.execute();
