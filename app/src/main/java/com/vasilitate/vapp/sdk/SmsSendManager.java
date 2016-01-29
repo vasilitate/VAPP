@@ -82,6 +82,8 @@ class SmsSendManager {
     private SmsSentReceiver smsSentReceiver;
     private SmsDeliveredReceiver smsDeliveredReceiver;
 
+    private boolean isFirstInSequence = true;
+
     SmsSendManager(VappProduct currentProduct, boolean testMode,
                    PendingIntent sentPI, PendingIntent deliveredPI,
                    Service context, SmsSendListener sendListener) {
@@ -95,37 +97,46 @@ class SmsSendManager {
         this.sendListener = sendListener;
 
         vappDbHelper = new VappDbHelper(this.context);
+        totalSMSCount = VappConfiguration.getCurrentDownloadSmsCountForProduct(context, currentProduct);
+        currentSmsIndex = Vapp.getSMSPaymentProgress(context, currentProduct);
         initialiseRandomSendIntervals();
+    }
+
+    /**
+     * Create random ms intervals to wait between sending messages
+     */
+    private void initialiseRandomSendIntervals() {
+        int sentCount = VappConfiguration.getSentSmsCountForProduct(context, currentProduct);
+        sendIntervals = new Stack<>();
+        secondsRemaining = 0;
+
+        int smsToSend = (totalSMSCount - sentCount);
+
+        for (int i = 1; i < smsToSend; i++) {
+            int interval = VappProductManager.generateSMSSendInterval(context, Vapp.getAllDeliveryNumbers().size());
+            sendIntervals.push(interval);
+            secondsRemaining += interval;
+        }
+        durationInSeconds = secondsRemaining;
     }
 
     /**
      * Triggers the sending of an SMS for the current product. The time at which the SMS may be delayed
      * if the random interval since the last sending has not yet passed.
      */
-    void sendSMSForCurrentProduct() {
-        // Ensure there are still SMSs to send.  If not (e.g. after a re-start?) mark the
-        // current product as bought...
-        if (sendIntervals.isEmpty()) {
-            return;
+    void addNextSmsToSendQueue() {
+        if (isFirstInSequence) { // send immediately without waiting for an interval
+            isFirstInSequence = false;
+            sendSMS();
+        }
+        else { // start a countdown and send the sms once an interval has passed
+            startSmsSendCountdown(sendIntervals.peek());
         }
 
-        int interval = 0;
-
-        if (!isFirstSms()) {
-            interval = sendIntervals.peek();
-        }
-
-        final int currentInterval = interval;
         int progressPercentage = (durationInSeconds - secondsRemaining) * 100 / durationInSeconds;
 
         if (sendListener != null) {
             sendListener.onSmsProgressUpdate(currentSmsIndex, progressPercentage);
-        }
-        if (interval == 0) {
-            sendSMS();
-        }
-        else {
-            startSmsSendCountdown(currentInterval);
         }
     }
 
@@ -200,13 +211,13 @@ class SmsSendManager {
         currentSmsIndex++; // Move onto the next message...
         VappConfiguration.setSentSmsCountForProduct(context, currentProduct, currentSmsIndex);
 
-        if (hasFinished()) {
+        if (hasFinishedPurchase()) {
             completeSmsPurchase();
         }
     }
 
     /**
-     * Cancels the sending of the current message, if {@link SmsSendManager#sendSMSForCurrentProduct()}
+     * Cancels the sending of the current message, if {@link SmsSendManager#addNextSmsToSendQueue()}
      * has been called.
      */
     void cancel() {
@@ -231,11 +242,11 @@ class SmsSendManager {
         }
     }
 
-    boolean isFirstSms() {
+    boolean isFirstSmsInPurchase() {
         return currentSmsIndex == 0;
     }
 
-    boolean hasFinished() {
+    boolean hasFinishedPurchase() {
         return !(currentSmsIndex < currentProduct.getRequiredSmsCount());
     }
 
@@ -261,27 +272,6 @@ class SmsSendManager {
         if (sendListener != null) {
             sendListener.onSmsPurchaseCompleted();
         }
-    }
-
-    /**
-     * Create random ms intervals to wait between sending messages
-     */
-    private void initialiseRandomSendIntervals() {
-        totalSMSCount = VappConfiguration.getCurrentDownloadSmsCountForProduct(context, currentProduct);
-        int sentCount = VappConfiguration.getSentSmsCountForProduct(context, currentProduct);
-        currentSmsIndex = Vapp.getSMSPaymentProgress(context, currentProduct);
-
-        sendIntervals = new Stack<>();
-        secondsRemaining = 0;
-
-        int smsToSend = (totalSMSCount - sentCount);
-
-        for (int i = 1; i <= smsToSend; i++) {
-            int interval = VappProductManager.generateSMSSendInterval(context, Vapp.getAllDeliveryNumbers().size());
-            sendIntervals.push(interval);
-            secondsRemaining += interval;
-        }
-        durationInSeconds = secondsRemaining;
     }
 
     private class SmsSentReceiver extends BroadcastReceiver {

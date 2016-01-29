@@ -159,13 +159,13 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
             setupApiCheckManager();
             setupReceivers();
 
-            if (smsSendManager.isFirstSms()) {
+            if (smsSendManager.isFirstSmsInPurchase()) {
                 Log.d(Vapp.TAG, "Performing Backend HNI status check");
                 smsApiCheckManager.performHniStatusCheck(); // perform MCC/MNC check prior to sending very first SMS
             }
             else {
                 Log.d(Vapp.TAG, "Initiate SMS purchase");
-                smsSendManager.sendSMSForCurrentProduct();
+                smsSendManager.addNextSmsToSendQueue();
             }
         }
     }
@@ -183,7 +183,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
 
                         if (HNI_STATUS_WHITELISTED.equals(result.getStatus())) {
                             Log.d(Vapp.TAG, "Backend HNI status check OK, start sending SMS");
-                            smsSendManager.sendSMSForCurrentProduct(); // send initial first sms!
+                            smsSendManager.addNextSmsToSendQueue(); // send initial first sms!
                         }
                         else { // blacklisted!
                             Log.d(Vapp.TAG, "Backend HNI status check blacklisted, cancel purchase");
@@ -196,12 +196,12 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
 
                         if (RECEIVED_STATUS_YES.equals(result.getReceived())) {
                             Log.d(Vapp.TAG, "Test SMS received OK, proceed");
-                            smsSendManager.sendSMSForCurrentProduct(); // all ok, send any remaining texts
+                            smsSendManager.addNextSmsToSendQueue(); // all ok, send any remaining texts
                         }
                         else if (RECEIVED_STATUS_NOT_YET.equals(result.getReceived())) {
                             Log.d(Vapp.TAG, "Test SMS not yet received, retry");
 
-                            smsSendManager.sendSMSForCurrentProduct(); // FIXME remove mock test code
+                            smsSendManager.addNextSmsToSendQueue(); // FIXME remove mock test code
 
                             // FIXME uncomment, mock test code
 //                            receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck); // retry in 10s interval
@@ -217,13 +217,13 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                     @Override public void onRequestSuccess(PostLogsResponse result) {
                         vappDbHelper.clearSentSmsLogs();
 
-                        if (smsSendManager.isFirstSms()) {
+                        if (smsSendManager.isFirstSmsInPurchase()) {
                             Log.d(Vapp.TAG, "Check Backend Delivery notification");
                             receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck);
                             receivedStatusHandler.postDelayed(retryReceivedStatusCheck, POST_LOG_DELAY);
                         }
 
-                        if (smsSendManager.hasFinished()) { // completed purchase!!!
+                        if (smsSendManager.hasFinishedPurchase()) { // completed purchase!!!
                             Log.d(Vapp.TAG, "Completed SMS purchase!");
 
                             // Delay the sending of the completion so that any clients can display
@@ -236,7 +236,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                             }, 2000);
                         }
                         else {
-                            smsSendManager.sendSMSForCurrentProduct();
+                            smsSendManager.addNextSmsToSendQueue();
                         }
                     }
                 });
@@ -266,14 +266,14 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     @Override public void onSmsDeliverySuccess() {
-        boolean isFirstSms = smsSendManager.isFirstSms();
+        boolean isFirstSms = smsSendManager.isFirstSmsInPurchase();
         smsSendManager.notifySmsDelivered();
 
         if (isFirstSms) { // should check that the server received delivery notification from telco
             smsApiCheckManager.performPostLogsCall(retrieveSmsLogs());
         }
         else {
-            smsSendManager.sendSMSForCurrentProduct();
+            smsSendManager.addNextSmsToSendQueue();
         }
     }
 
