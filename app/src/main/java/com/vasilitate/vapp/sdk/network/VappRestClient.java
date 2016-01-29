@@ -111,7 +111,9 @@ public class VappRestClient implements VappRestApi {
             ddi = ddi.replace(PostLogsBody.PLUS_SYMBOL, "");
         }
 
-        String address = combinePaths(endpoint, RESOURCE_RECEIVED_STATUS, ddi, random2, random3);
+        String cli = "447774532889"; // FIXME remove, placeholder!
+
+        String address = combinePaths(endpoint, RESOURCE_RECEIVED_STATUS, cli, ddi, random2, random3);
         URL url = getUrlForAddress(address);
 
         HttpURLConnection connection = createHttpConnection(url, HTTP_GET);

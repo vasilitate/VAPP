@@ -152,7 +152,7 @@ class SmsSendManager {
 
                 int progressPercentage = (durationInSeconds - remainingCount) * 100 / durationInSeconds;
 
-                if (lastProgressPercentage != progressPercentage) {
+                if (lastProgressPercentage != progressPercentage && progressPercentage > lastProgressPercentage) {
 
                     if (sendListener != null) {
                         sendListener.onSmsProgressUpdate(progressPercentage);
@@ -163,7 +163,9 @@ class SmsSendManager {
 
             @Override
             public void onFinish() {
-                secondsRemaining -= sendIntervals.pop();
+                if (!sendIntervals.isEmpty()) {
+                    secondsRemaining -= sendIntervals.pop();
+                }
                 sendSMS();
             }
         };
@@ -243,7 +245,7 @@ class SmsSendManager {
     }
 
     boolean isFirstSmsInPurchase() {
-        return currentSmsIndex <= 1;
+        return currentSmsIndex == 0;
     }
 
     boolean hasFinishedPurchase() {

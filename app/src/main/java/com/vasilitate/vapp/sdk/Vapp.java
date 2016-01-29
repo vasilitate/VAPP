@@ -510,7 +510,10 @@ public abstract class Vapp {
 
     @Nullable static String getUserPhoneNumber(Context context) {
         TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        return tm.getLine1Number();
+//        return tm.getLine1Number();
+
+        String cli = "+447774532889"; // FIXME remove, placeholder!
+        return cli;
     }
 
     static VappProduct getProduct(String productId) throws VappException {
