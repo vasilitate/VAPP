@@ -17,6 +17,11 @@ dependencies {
 After syncing your gradle files, your project should be ready to initialise VAPP! with a list of products.
 See the [sample application](https://github.com/vasilitate/VAPP-Store) if you are having trouble with this step.
 
+# Vapp Numbers
+You should download a 'vapp_numbers.csv' file and place it in your assets directory (/src/main/assets).
+This file can be found on the developer console under System > Profile > vapp_numbers.csv, and is
+required for the SDK to work.
+
 ### Initialising VAPP!
 Vapp.initialise() must be called before any SMS payments are made. Initialisation requires several pieces of information:
 
@@ -31,7 +36,6 @@ using something similar to the snippet below:
 private static final String VAPP_APP_ID = "MyAppId";
 
 List<VappProduct> productList = new ArrayList<>();
-VappNumberRange vappNumberRange = new VappNumberRange("+447458830000", "+447458830009");
 
 Vapp.initialise(this, VAPP_APP_ID, productList, false, false, MY_SDK_KEY);
 ```
