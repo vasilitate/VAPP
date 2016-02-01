@@ -25,7 +25,7 @@ required for the SDK to work.
 ### Initialising VAPP!
 Vapp.initialise() must be called before any SMS payments are made. Initialisation requires several pieces of information:
 
-- Your app id, which identifies your payments
+- Your SDK key, which identifies your payments for the app
 - The number range which you have been assigned
 - A list of products within your app, which can be paid for using SMS
 
@@ -33,11 +33,11 @@ It is recommended that you initialise VAPP! within a custom [Application class](
 using something similar to the snippet below:
 
 ```
-private static final String VAPP_APP_ID = "MyAppId";
+private static final String MY_SDK_KEY = "ABCDEFG123";
 
 List<VappProduct> productList = new ArrayList<>();
 
-Vapp.initialise(this, VAPP_APP_ID, productList, false, false, MY_SDK_KEY);
+Vapp.initialise(this, productList, false, false, MY_SDK_KEY);
 ```
 
 ### Defining Products

@@ -13,7 +13,6 @@ import java.util.List;
 
 public class PaymentProgressTest extends AndroidTestCase {
 
-    private static final String APP_NAME = "VappTest";
     private static final VappProduct PRODUCT_LIVES = new VappProduct("productLives", 10, 1);
     private static final VappProduct PRODUCT_UNREIGSTERED = new VappProduct("unreistered", 10, 1);
     private static final String NUMBER_RANGE = "+447458830000";
@@ -25,7 +24,6 @@ public class PaymentProgressTest extends AndroidTestCase {
         productList.add(PRODUCT_LIVES);
 
         Vapp.initialise(getContext(),
-                APP_NAME,
                 productList,
                 true,
                 true,

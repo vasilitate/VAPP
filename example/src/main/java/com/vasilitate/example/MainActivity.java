@@ -21,7 +21,6 @@ import java.util.List;
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final List<VappProduct> VAPP_PRODUCTS = MyProduct.getProducts();
-    private static final String VAPP_APP_NAME = "ExampleApp";
 
     private TextView rankStatusView;
     private TextView livesStatusView;
@@ -39,7 +38,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         try {
             Vapp.initialise(this,
-                            VAPP_APP_NAME,
                             VAPP_PRODUCTS,
                             true,     // Test mode - don't send SMSs
                             true,

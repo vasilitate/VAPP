@@ -12,7 +12,6 @@ class VappSms {
     private static final String ROAMING_INDICATOR = "Roaming";
 
     private final String appVappId;
-    private final String productName;
     private final int smsCount;
     private final int currentSms;
     private final String imei;
@@ -27,11 +26,10 @@ class VappSms {
 
     private final String message;
 
-    VappSms(String appVappId, String productName, int smsCount, int currentSms, String imei,
+    VappSms(String appVappId, int smsCount, int currentSms, String imei,
             boolean isRoaming, String networkName, String networkCountry, String deliveryNumber) {
 
         this.appVappId = appVappId;
-        this.productName = productName;
         this.smsCount = smsCount;
         this.currentSms = currentSms;
         this.imei = imei;
@@ -50,9 +48,8 @@ class VappSms {
         String message =
                 randomSegment1 + SMS_FIELD_SEPARATOR +
                         appVappId + SMS_FIELD_SEPARATOR +
-                        productName + SMS_FIELD_SEPARATOR +
                         imei + SMS_FIELD_SEPARATOR +
-                        Integer.toString(currentSms + 1) + "/" +
+                        Integer.toString(currentSms + 1) + " " +
                         Integer.toString(smsCount) + SMS_FIELD_SEPARATOR +
                         networkName + SMS_FIELD_SEPARATOR +
                         networkCountry + SMS_FIELD_SEPARATOR +

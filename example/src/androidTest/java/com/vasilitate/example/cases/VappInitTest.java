@@ -4,7 +4,6 @@ import android.test.AndroidTestCase;
 
 import com.vasilitate.vapp.sdk.Vapp;
 import com.vasilitate.vapp.sdk.VappProduct;
-import com.vasilitate.vapp.sdk.exceptions.InvalidApplicationVappIdException;
 import com.vasilitate.vapp.sdk.exceptions.InvalidProductIdException;
 import com.vasilitate.vapp.sdk.exceptions.InvalidSmsCountException;
 import com.vasilitate.vapp.sdk.exceptions.InvalidVappProductException;
@@ -13,13 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VappInitTest extends AndroidTestCase {
-
-    private static final String APP_NAME = "VappTest";
-    private static final String NUMBER_RANGE = "+447458830000";
-
-    private static final long MIN_RANGE_START = 447458830000L;
-    private static final long MAX_RANGE_START = 447458839999L;
-
 
     private List<VappProduct> productList;
 
@@ -32,36 +24,7 @@ public class VappInitTest extends AndroidTestCase {
         assertNotNull(getContext());
     }
 
-    /**
-     * Checks that invalid Vapp App ids throw an exception on initialisation
-     */
-    public void testInvalidAppIds() {
-        String[] testData = {null, "", "1234567890abcdef", "abc?", "SixteeenLetterss", "My game",
-                "Az3?", "1234567890abcdef", "spaces "};
-
-        for (String id : testData) {
-            try {
-                Vapp.initialise(getContext(), id, productList, true, true, "BG8R4X2PCXYCHRCRJTK6");
-                fail(String.format("Invalid Vapp Id '%s' not rejected", id));
-            }
-            catch (InvalidApplicationVappIdException ignored) {
-            }
-        }
-    }
-
-    /**
-     * Checks that valid Vapp App ids are accepted on initialisation
-     */
-    public void testValidAppIds() {
-        String[] testData = {"Vappit", "HotPotato", "BottleSmash", "Fifteenletterss", "Fourteenletters"};
-        productList.add(new VappProduct("ExtraLives", 10, 1));
-
-        for (String id : testData) {
-            Vapp.initialise(getContext(), id, productList, true, true, "BG8R4X2PCXYCHRCRJTK6");
-        }
-    }
-
-    /**
+       /**
      * Checks that invalid SMS counts throw an exception on initialisation
      */
     public void testInvalidSmsCounts() {
@@ -73,7 +36,6 @@ public class VappInitTest extends AndroidTestCase {
 
             try {
                 Vapp.initialise(getContext(),
-                        APP_NAME,
                         productList,
                         true,
                         true, "BG8R4X2PCXYCHRCRJTK6");
@@ -94,7 +56,6 @@ public class VappInitTest extends AndroidTestCase {
             productList.clear();
             productList.add(new VappProduct("ExtraLives", count, 1));
             Vapp.initialise(getContext(),
-                    APP_NAME,
                     productList,
                     true,
                     true, "BG8R4X2PCXYCHRCRJTK6");
@@ -125,7 +86,6 @@ public class VappInitTest extends AndroidTestCase {
         for (List<VappProduct> productList : listList) {
             try {
                 Vapp.initialise(getContext(),
-                        APP_NAME,
                         productList,
                         true,
                         true, "BG8R4X2PCXYCHRCRJTK6");
@@ -149,7 +109,6 @@ public class VappInitTest extends AndroidTestCase {
 
             try {
                 Vapp.initialise(getContext(),
-                        APP_NAME,
                         productList,
                         true,
                         true, "BG8R4X2PCXYCHRCRJTK6");
@@ -170,7 +129,6 @@ public class VappInitTest extends AndroidTestCase {
             productList.clear();
             productList.add(new VappProduct(id, 1, 1));
             Vapp.initialise(getContext(),
-                    APP_NAME,
                     productList,
                     true,
                     true, "BG8R4X2PCXYCHRCRJTK6");

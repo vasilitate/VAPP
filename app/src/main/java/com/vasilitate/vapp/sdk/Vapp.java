@@ -42,12 +42,9 @@ public abstract class Vapp {
     private static final Pattern ALPHANUMERIC_PATTERN = Pattern.compile("[a-zA-Z0-9]{1,15}");
     private static final String RESOURCE_FILE_NUMBERS_CSV = "vapp_numbers.csv";
 
-    private static final long MIN_RANGE_START = 447458830000L;
-    private static final long MAX_RANGE_START = 447458839999L;
-
     private static boolean initialised = false;
+    private static String sdkKey;
 
-    private static String appVappId;
     private static List<VappProduct> productList;
     private static List<String> deliveryNumbers;
     private static Map<String, String> billingRouteMap;
@@ -64,7 +61,6 @@ public abstract class Vapp {
      * If this method is not called, the behaviour of other methods is undetermined.
      *
      * @param context             the current context
-     * @param appVappId           the unique application Id (1 - 15 alpha-numeric characters (no spaces))
      * @param products            a list of VappProduct objects, representing the available products
      * @param testMode            false for default functionality, true to disable SMS sending for test purposes
      * @param cancellableProducts true if users should be able to cancel product purchases (default), false if not
@@ -77,7 +73,6 @@ public abstract class Vapp {
      * @throws InvalidVappNumberException        invalid Vapp number specified.
      */
     public static synchronized void initialise(Context context,
-                                               String appVappId,
                                                List<VappProduct> products,
                                                boolean testMode,
                                                boolean cancellableProducts,
@@ -86,18 +81,18 @@ public abstract class Vapp {
             InvalidProductIdException, InvalidVappNetworkException, InvalidVappProductException,
             InvalidVappNumberException {
 
-        validateApplicationVappId(appVappId);
-        Vapp.appVappId = appVappId;
-
         if (TextUtils.isEmpty(sdkKey)) {
             throw new VappException("Invalid value for SDK key - cannot be null!");
+        }
+        else {
+            Vapp.sdkKey = sdkKey;
+            VappConfiguration.setSdkKey(context, sdkKey);
         }
 
         readCsvNumbers(context);
 
         VappConfiguration.setTestMode(context, testMode);
         VappConfiguration.setCancellableProducts(context, cancellableProducts);
-        VappConfiguration.setSdkKey(context, sdkKey);
         initialiseBillingRouteLookup(context);
 
         if (products == null || products.isEmpty()) {
@@ -497,11 +492,7 @@ public abstract class Vapp {
         String originatingNetworkCountry = getOriginatingNetworkCountry(context);
         String deliveryNumber = VappProductManager.getRandomDeliveryNumber(deliveryNumbers);
 
-        return new VappSms(appVappId,
-                product.getProductId(),
-                smsCount,
-                smsIndex,
-                imei,
+        return new VappSms(sdkKey, smsCount, smsIndex, imei,
                 isRoaming(context),
                 originatingNetworkName,
                 originatingNetworkCountry,
