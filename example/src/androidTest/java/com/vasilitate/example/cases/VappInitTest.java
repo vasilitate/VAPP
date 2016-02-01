@@ -3,12 +3,10 @@ package com.vasilitate.example.cases;
 import android.test.AndroidTestCase;
 
 import com.vasilitate.vapp.sdk.Vapp;
-import com.vasilitate.vapp.sdk.VappNumberRange;
 import com.vasilitate.vapp.sdk.VappProduct;
 import com.vasilitate.vapp.sdk.exceptions.InvalidApplicationVappIdException;
 import com.vasilitate.vapp.sdk.exceptions.InvalidProductIdException;
 import com.vasilitate.vapp.sdk.exceptions.InvalidSmsCountException;
-import com.vasilitate.vapp.sdk.exceptions.InvalidVappNumberException;
 import com.vasilitate.vapp.sdk.exceptions.InvalidVappProductException;
 
 import java.util.ArrayList;
@@ -43,7 +41,7 @@ public class VappInitTest extends AndroidTestCase {
 
         for (String id : testData) {
             try {
-                Vapp.initialise(getContext(), id, productList, new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true, true, "BG8R4X2PCXYCHRCRJTK6");
+                Vapp.initialise(getContext(), id, productList, true, true, "BG8R4X2PCXYCHRCRJTK6");
                 fail(String.format("Invalid Vapp Id '%s' not rejected", id));
             }
             catch (InvalidApplicationVappIdException ignored) {
@@ -59,7 +57,7 @@ public class VappInitTest extends AndroidTestCase {
         productList.add(new VappProduct("ExtraLives", 10, 1));
 
         for (String id : testData) {
-            Vapp.initialise(getContext(), id, productList, new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE), true, true, "BG8R4X2PCXYCHRCRJTK6");
+            Vapp.initialise(getContext(), id, productList, true, true, "BG8R4X2PCXYCHRCRJTK6");
         }
     }
 
@@ -77,7 +75,6 @@ public class VappInitTest extends AndroidTestCase {
                 Vapp.initialise(getContext(),
                         APP_NAME,
                         productList,
-                        new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                         true,
                         true, "BG8R4X2PCXYCHRCRJTK6");
                 fail(String.format("Failed to reject invalid SMS count '%d'", count));
@@ -99,7 +96,6 @@ public class VappInitTest extends AndroidTestCase {
             Vapp.initialise(getContext(),
                     APP_NAME,
                     productList,
-                    new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                     true,
                     true, "BG8R4X2PCXYCHRCRJTK6");
         }
@@ -131,7 +127,6 @@ public class VappInitTest extends AndroidTestCase {
                 Vapp.initialise(getContext(),
                         APP_NAME,
                         productList,
-                        new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                         true,
                         true, "BG8R4X2PCXYCHRCRJTK6");
                 fail("Failed to reject initialisation with invalid product list " + productList);
@@ -156,7 +151,6 @@ public class VappInitTest extends AndroidTestCase {
                 Vapp.initialise(getContext(),
                         APP_NAME,
                         productList,
-                        new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                         true,
                         true, "BG8R4X2PCXYCHRCRJTK6");
                 fail();
@@ -178,75 +172,9 @@ public class VappInitTest extends AndroidTestCase {
             Vapp.initialise(getContext(),
                     APP_NAME,
                     productList,
-                    new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                     true,
                     true, "BG8R4X2PCXYCHRCRJTK6");
         }
-    }
-
-    public void testInvalidNumberRanges() {
-        productList.add(new VappProduct("ExtraLives", 10, 1));
-
-        List<VappNumberRange> invalidRanges = new ArrayList<>();
-        invalidRanges.add(new VappNumberRange(numberFromLong(MIN_RANGE_START), numberFromLong(MAX_RANGE_START + 1)));
-        invalidRanges.add(new VappNumberRange(numberFromLong(MIN_RANGE_START - 1), numberFromLong(MAX_RANGE_START + 1)));
-        invalidRanges.add(new VappNumberRange(numberFromLong(MIN_RANGE_START - 1), numberFromLong(MAX_RANGE_START)));
-        invalidRanges.add(new VappNumberRange(numberFromLong(-1), numberFromLong(MAX_RANGE_START)));
-        invalidRanges.add(new VappNumberRange(numberFromLong(1234), numberFromLong(MAX_RANGE_START)));
-
-        testFailRange(numberFromLong(MIN_RANGE_START), String.format("%d", MAX_RANGE_START));
-        testFailRange(numberFromLong(MIN_RANGE_START), null);
-        testFailRange(String.format("%d", MIN_RANGE_START), numberFromLong(MAX_RANGE_START));
-        testFailRange(null, numberFromLong(MAX_RANGE_START));
-        testFailRange(numberFromLong(9999999999999L), numberFromLong(0L));
-
-        for (VappNumberRange numberRange : invalidRanges) {
-            try {
-                Vapp.initialise(getContext(),
-                        APP_NAME,
-                        productList,
-                        numberRange,
-                        true,
-                        true, "BG8R4X2PCXYCHRCRJTK6");
-                fail(String.format("Failed to reject invalid number range %s", numberRange));
-            }
-            catch (InvalidVappNumberException ignored) {
-            }
-        }
-    }
-
-    public void testValidNumberRanges() {
-        productList.add(new VappProduct("ExtraLives", 10, 1));
-
-        List<VappNumberRange> validRanges = new ArrayList<>();
-        validRanges.add(new VappNumberRange(numberFromLong(MIN_RANGE_START), numberFromLong(MAX_RANGE_START)));
-        validRanges.add(new VappNumberRange(numberFromLong(MIN_RANGE_START + 1), numberFromLong(MAX_RANGE_START - 1)));
-        validRanges.add(new VappNumberRange(numberFromLong(MIN_RANGE_START + 57), numberFromLong(MAX_RANGE_START - 89)));
-        validRanges.add(new VappNumberRange(numberFromLong(MIN_RANGE_START + 263), numberFromLong(MAX_RANGE_START - 671)));
-        validRanges.add(new VappNumberRange(numberFromLong(MIN_RANGE_START + 2653), numberFromLong(MAX_RANGE_START - 3661)));
-        validRanges.add(new VappNumberRange(numberFromLong(MIN_RANGE_START), numberFromLong(MIN_RANGE_START)));
-
-        for (VappNumberRange numberRange : validRanges) {
-            Vapp.initialise(getContext(),
-                    APP_NAME,
-                    productList,
-                    numberRange,
-                    true,
-                    true, "BG8R4X2PCXYCHRCRJTK6");
-        }
-    }
-
-    private void testFailRange(String start, String end) {
-        try {
-            new VappNumberRange(start, end);
-            fail("Failed to reject invalid range");
-        }
-        catch (InvalidVappNumberException ignored) {
-        }
-    }
-
-    private String numberFromLong(long number) {
-        return String.format("+%d", number);
     }
 
 }

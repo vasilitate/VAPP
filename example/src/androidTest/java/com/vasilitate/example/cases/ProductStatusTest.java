@@ -4,7 +4,6 @@ import android.preference.PreferenceManager;
 import android.test.AndroidTestCase;
 
 import com.vasilitate.vapp.sdk.Vapp;
-import com.vasilitate.vapp.sdk.VappNumberRange;
 import com.vasilitate.vapp.sdk.VappProduct;
 
 import java.util.ArrayList;
@@ -25,7 +24,6 @@ public class ProductStatusTest extends AndroidTestCase {
         Vapp.initialise(getContext(),
                 APP_NAME,
                 productList,
-                new VappNumberRange(NUMBER_RANGE, NUMBER_RANGE),
                 true,
                 true,
                 "BG8R4X2PCXYCHRCRJTK6");

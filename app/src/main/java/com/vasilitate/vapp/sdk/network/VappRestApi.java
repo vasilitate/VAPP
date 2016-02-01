@@ -16,7 +16,6 @@ import java.io.IOException;
  */
 public interface VappRestApi {
 
-
     /**
      * Gets the status of the Home Network Id for the current device. Should be called prior to
      * sending any SMS, to check whether the network is blacklisted.
@@ -40,13 +39,13 @@ public interface VappRestApi {
     /**
      * Gets whether the server has received an SMS delivery notification from a 3rd party telco.
      *
+     * @param mcc     the mcc code for the current device.
+     * @param mnc     the mnc code for the current device.
      * @param ddi     the destination number
      * @param random2 random hex uniquely identifying a message
      * @param random3 random hex uniquely identifying a message
      * @return a {@link BaseResponse}
      */
-    GetReceivedStatusResponse getReceivedStatus(String ddi,
-                                                String random2,
-                                                String random3) throws VappApiException, IOException;
-
+    GetReceivedStatusResponse getReceivedStatus(String mcc, String mnc, String ddi,
+                                                String random2, String random3) throws VappApiException, IOException;
 }

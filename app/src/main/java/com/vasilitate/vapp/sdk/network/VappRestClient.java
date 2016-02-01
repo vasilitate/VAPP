@@ -102,18 +102,20 @@ public class VappRestClient implements VappRestApi {
     }
 
     @Override
-    public GetReceivedStatusResponse getReceivedStatus(String ddi, String random2, String random3) throws VappApiException, IOException {
+    public GetReceivedStatusResponse getReceivedStatus(String mcc, String mnc, String ddi,
+                                                       String random2, String random3) throws VappApiException, IOException {
+        validateParameter(mnc, "mnc");
+        validateParameter(mcc, "mcc");
+        validateParameter(ddi, "ddi");
         validateParameter(ddi, "ddi");
         validateParameter(random2, "random2");
         validateParameter(random3, "random3");
 
-        if (ddi.startsWith(PostLogsBody.PLUS_SYMBOL)) {
-            ddi = ddi.replace(PostLogsBody.PLUS_SYMBOL, "");
-        }
+        ddi = stripPlusSymbol(ddi);
+        mnc = stripPlusSymbol(mnc);
+        mcc = stripPlusSymbol(mcc);
 
-        String cli = "447774532889"; // FIXME remove, placeholder!
-
-        String address = combinePaths(endpoint, RESOURCE_RECEIVED_STATUS, cli, ddi, random2, random3);
+        String address = combinePaths(endpoint, RESOURCE_RECEIVED_STATUS, mcc, mnc, ddi, random2, random3);
         URL url = getUrlForAddress(address);
 
         HttpURLConnection connection = createHttpConnection(url, HTTP_GET);
@@ -132,6 +134,9 @@ public class VappRestClient implements VappRestApi {
      * internal methods
      ***/
 
+    private String stripPlusSymbol(String input) {
+        return input.replace(PostLogsBody.PLUS_SYMBOL, "");
+    }
 
     private HttpURLConnection createHttpConnection(URL url, @HTTPMethod String method) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();

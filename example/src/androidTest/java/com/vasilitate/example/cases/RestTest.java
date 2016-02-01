@@ -35,17 +35,17 @@ public class RestTest extends AndroidTestCase {
 
     @Override public void setUp() throws Exception {
         super.setUp();
-        vappRestClient = new VappRestClient(ENDPOINT, VALID_SDK_KEY);
+        vappRestClient = new VappRestClient(ENDPOINT, VALID_SDK_KEY, true);
     }
 
     public void testInvalidSdkKey() throws IOException {
-        vappRestClient = new VappRestClient(ENDPOINT, null);
+        vappRestClient = new VappRestClient(ENDPOINT, null, true);
         GetHniStatusResponse response = vappRestClient.getHniStatus(VALID_MCC, VALID_MCC);
         assertNotNull(response);
         assertEquals("error", response.getStatus());
         assertNotNull(response.getError());
 
-        vappRestClient = new VappRestClient(ENDPOINT, "invalid");
+        vappRestClient = new VappRestClient(ENDPOINT, "invalid", true);
         response = vappRestClient.getHniStatus(VALID_MCC, VALID_MCC);
         assertNotNull(response);
         assertEquals("error", response.getStatus());
@@ -73,15 +73,15 @@ public class RestTest extends AndroidTestCase {
     }
 
     public void testInvalidGetReceivedStatus() throws IOException {
-        checkInvalidReceivedStatusCall(null, VALID_DDI, VALID_RANDOM_2, VALID_RANDOM_3);
-        checkInvalidReceivedStatusCall(VALID_CLI, "", VALID_RANDOM_2, VALID_RANDOM_3);
-        checkInvalidReceivedStatusCall(VALID_CLI, VALID_DDI, null, VALID_RANDOM_3);
-        checkInvalidReceivedStatusCall(VALID_CLI, VALID_DDI, VALID_RANDOM_2, "");
+        checkInvalidReceivedStatusCall(VALID_DDI, VALID_RANDOM_2, VALID_RANDOM_3);
+        checkInvalidReceivedStatusCall("", VALID_RANDOM_2, VALID_RANDOM_3);
+        checkInvalidReceivedStatusCall(VALID_DDI, null, VALID_RANDOM_3);
+        checkInvalidReceivedStatusCall(VALID_DDI, VALID_RANDOM_2, "");
     }
 
     public void testGetReceivedStatus() throws IOException {
         // invalid '+' symbol included in numbers should be handled
-        GetReceivedStatusResponse receivedStatus = vappRestClient.getReceivedStatus("+" + VALID_CLI,
+        GetReceivedStatusResponse receivedStatus = vappRestClient.getReceivedStatus(VALID_MCC, VALID_MNC, "+" +
                 VALID_DDI,
                 VALID_RANDOM_2,
                 VALID_RANDOM_3);
@@ -90,9 +90,9 @@ public class RestTest extends AndroidTestCase {
         assertEquals(GetReceivedStatusResponse.RECEIVED_STATUS_BLACKLISTED, receivedStatus.getReceived());
     }
 
-    private void checkInvalidReceivedStatusCall(String cli, String ddi, String rand2, String rand3) throws IOException {
+    private void checkInvalidReceivedStatusCall(String ddi, String rand2, String rand3) throws IOException {
         try {
-            vappRestClient.getReceivedStatus(cli, ddi, rand2, rand3);
+            vappRestClient.getReceivedStatus(VALID_MCC, VALID_MNC, ddi, rand2, rand3);
             fail("Should reject invalid parameter");
         }
         catch (VappApiException ignored) {
