@@ -120,10 +120,6 @@ public abstract class Vapp {
         if (productBeingPurchased != null) {
             startSMSService(context, productBeingPurchased.getProductId());
         }
-
-        VappSms sms = generateSmsForProduct(context, 5, 2);
-        String s = sms.toString();
-        Log.d(TAG, s);
     }
 
     /**

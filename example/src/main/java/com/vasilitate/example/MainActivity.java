@@ -39,7 +39,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         try {
             Vapp.initialise(this,
                             VAPP_PRODUCTS,
-                            true,     // Test mode - don't send SMSs
+                            false,     // Test mode - don't send SMSs
                             true,
                             "BG8R4X2PCXYCHRCRJTK6");
 

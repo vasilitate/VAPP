@@ -7,7 +7,6 @@ import java.util.List;
 
 /**
  * A convenience enum for setting up the products.
-
  */
 public enum MyProduct {
 

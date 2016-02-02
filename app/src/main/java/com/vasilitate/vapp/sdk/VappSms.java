@@ -6,11 +6,10 @@ import java.util.Random;
  * Holds a generated SMS which is sent to a VAPP telephone number.
  */
 class VappSms {
-    private static final char[] RAND_CHARS = {'(', ')', '<', '>'};
+    private static final char[] RAND_CHARS = {'(', ')', '@', '#', '~', '^'};
     private static final int RAND_CHARS_LEN = RAND_CHARS.length;
 
     private static final String SMS_FIELD_SEPARATOR = " ";
-    private static final String SDK_NAME = "VAPP!";
     private static final String ROAMING_INDICATOR = "Roaming";
 
     private final String appVappId;
@@ -57,7 +56,7 @@ class VappSms {
         addFieldAndSpace(networkName, sb);
         addFieldAndSpace(networkCountry, sb);
 
-        addFieldAndRandomChars(randomSegment2, sb, random.nextInt(RAND_CHARS_LEN), random.nextInt(RAND_CHARS_LEN));
+        addFieldAndRandomChars(randomSegment2,sb,random.nextInt(RAND_CHARS_LEN),random.nextInt(RAND_CHARS_LEN));
         addFieldAndRandomChars(randomSegment3, sb, random.nextInt(RAND_CHARS_LEN), random.nextInt(RAND_CHARS_LEN));
 
         if (isRoaming) {

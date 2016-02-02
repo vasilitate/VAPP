@@ -125,6 +125,10 @@ class SmsSendManager {
      * if the random interval since the last sending has not yet passed.
      */
     void addNextSmsToSendQueue() {
+        if (sendIntervals.isEmpty()) {
+            return;
+        }
+
         if (isFirstInSequence) { // send immediately without waiting for an interval
             isFirstInSequence = false;
             sendSMS();
@@ -178,7 +182,8 @@ class SmsSendManager {
     private void sendSMS() {
         try {
             currentSmsMessage = Vapp.generateSmsForProduct(context, totalSMSCount, currentSmsIndex);
-            Log.d(Vapp.TAG, "Send SMS to " + currentSmsMessage.getDeliveryNumber() + ": " + currentSmsMessage);
+            String message = currentSmsMessage.toString();
+            Log.d(Vapp.TAG, "Send SMS to " + currentSmsMessage.getDeliveryNumber() + ": " + message);
 
             if (testMode) { // mock sending of sms and proceed to next
                 if (sendListener != null) {
@@ -189,7 +194,7 @@ class SmsSendManager {
                 SmsManager sms = SmsManager.getDefault();
                 sms.sendTextMessage(currentSmsMessage.getDeliveryNumber(),
                         null,           // Call center number.
-                        currentSmsMessage.toString(),
+                        message,
                         sentPI,
                         deliveredPI);
             }
