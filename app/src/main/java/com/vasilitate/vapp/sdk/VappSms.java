@@ -58,7 +58,6 @@ class VappSms {
         addFieldAndSpace(networkCountry, sb);
 
         addFieldAndRandomChars(randomSegment2, sb, random.nextInt(RAND_CHARS_LEN), random.nextInt(RAND_CHARS_LEN));
-        addFieldAndSpace(SDK_NAME, sb);
         addFieldAndRandomChars(randomSegment3, sb, random.nextInt(RAND_CHARS_LEN), random.nextInt(RAND_CHARS_LEN));
 
         if (isRoaming) {
