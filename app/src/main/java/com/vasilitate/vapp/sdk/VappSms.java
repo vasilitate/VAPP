@@ -6,6 +6,8 @@ import java.util.Random;
  * Holds a generated SMS which is sent to a VAPP telephone number.
  */
 class VappSms {
+    private static final char[] RAND_CHARS = {'(', ')', '<', '>'};
+    private static final int RAND_CHARS_LEN = RAND_CHARS.length;
 
     private static final String SMS_FIELD_SEPARATOR = " ";
     private static final String SDK_NAME = "VAPP!";
@@ -23,7 +25,6 @@ class VappSms {
     private final String randomSegment2;
     private final String randomSegment3;
     private final String deliveryNumber;
-
     private final String message;
 
     VappSms(String appVappId, int smsCount, int currentSms, String imei,
@@ -45,20 +46,37 @@ class VappSms {
     }
 
     private String generateSms() {
-        String message =
-                randomSegment1 + SMS_FIELD_SEPARATOR +
-                        appVappId + SMS_FIELD_SEPARATOR +
-                        imei + SMS_FIELD_SEPARATOR +
-                        Integer.toString(currentSms + 1) + " " +
-                        Integer.toString(smsCount) + SMS_FIELD_SEPARATOR +
-                        networkName + SMS_FIELD_SEPARATOR +
-                        networkCountry + SMS_FIELD_SEPARATOR +
-                        randomSegment2 + SMS_FIELD_SEPARATOR +
-                        SDK_NAME + SMS_FIELD_SEPARATOR +
-                        randomSegment3 + SMS_FIELD_SEPARATOR +
-                        (isRoaming ? ROAMING_INDICATOR : "");
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder();
 
-        return message.trim();
+        addFieldAndSpace(randomSegment1, sb); // 0-2 random hex
+        addFieldAndSpace(appVappId, sb); // sdk key
+        addFieldAndSpace(imei, sb);
+        addFieldAndSpace(Integer.toString(currentSms + 1), sb); // sms being sent
+        addFieldAndSpace(Integer.toString(smsCount), sb); // total sms count
+        addFieldAndSpace(networkName, sb);
+        addFieldAndSpace(networkCountry, sb);
+
+        addFieldAndRandomChars(randomSegment2, sb, random.nextInt(RAND_CHARS_LEN), random.nextInt(RAND_CHARS_LEN));
+        addFieldAndSpace(SDK_NAME, sb);
+        addFieldAndRandomChars(randomSegment3, sb, random.nextInt(RAND_CHARS_LEN), random.nextInt(RAND_CHARS_LEN));
+
+        if (isRoaming) {
+            sb.append(ROAMING_INDICATOR);
+        }
+        return sb.toString().trim();
+    }
+
+    private void addFieldAndSpace(String field, StringBuilder sb) {
+        sb.append(field); // 0-2 chars
+        sb.append(SMS_FIELD_SEPARATOR);
+    }
+
+    private void addFieldAndRandomChars(String field, StringBuilder sb, int firstIndex, int secondIndex) {
+        sb.append(RAND_CHARS[firstIndex]);
+        sb.append(field); // 0-2 chars
+        sb.append(RAND_CHARS[secondIndex]);
+        sb.append(SMS_FIELD_SEPARATOR);
     }
 
     private static String createRandomHexCode(int minChars, int maxChars) {

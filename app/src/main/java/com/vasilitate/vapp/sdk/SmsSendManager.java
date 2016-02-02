@@ -177,7 +177,7 @@ class SmsSendManager {
      */
     private void sendSMS() {
         try {
-            currentSmsMessage = Vapp.generateSmsForProduct(context, currentProduct, totalSMSCount, currentSmsIndex);
+            currentSmsMessage = Vapp.generateSmsForProduct(context, totalSMSCount, currentSmsIndex);
             Log.d(Vapp.TAG, "Send SMS to " + currentSmsMessage.getDeliveryNumber() + ": " + currentSmsMessage);
 
             if (testMode) { // mock sending of sms and proceed to next
