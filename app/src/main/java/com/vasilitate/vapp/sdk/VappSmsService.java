@@ -33,6 +33,7 @@ import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_COMPLETED;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_PURCHASE_NO_CONNECTION;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_PURCHASE_UNSUPPORTED;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_SENT_COUNT;
+import static com.vasilitate.vapp.sdk.network.response.BaseResponse.HNI_STATUS_UNKNOWN;
 import static com.vasilitate.vapp.sdk.network.response.BaseResponse.HNI_STATUS_WHITELISTED;
 import static com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse.RECEIVED_STATUS_NOT_YET;
 import static com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse.RECEIVED_STATUS_YES;
@@ -160,7 +161,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
             setupApiCheckManager();
             setupReceivers();
 
-            if (smsSendManager.isFirstSmsInPurchase()) {
+            if (smsSendManager.isFirstInSequence()) {
                 Log.d(Vapp.TAG, "Performing Backend HNI status check");
                 smsApiCheckManager.performHniStatusCheck(); // perform MCC/MNC check prior to sending very first SMS
             }
@@ -182,7 +183,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                 new ResponseHandler<GetHniStatusResponse>() {
                     @Override public void onRequestSuccess(GetHniStatusResponse result) {
 
-                        if (HNI_STATUS_WHITELISTED.equals(result.getStatus())) {
+                        if (HNI_STATUS_WHITELISTED.equals(result.getStatus()) || HNI_STATUS_UNKNOWN.equals(result.getStatus())) {
                             Log.d(Vapp.TAG, "Backend HNI status check OK, start sending SMS");
                             smsSendManager.addNextSmsToSendQueue(); // send initial first sms!
                         }
@@ -202,11 +203,9 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                         else if (RECEIVED_STATUS_NOT_YET.equals(result.getReceived())) {
                             Log.d(Vapp.TAG, "Test SMS not yet received, retry");
 
-                            smsSendManager.addNextSmsToSendQueue(); // FIXME remove mock test code
-
-                            // FIXME uncomment, mock test code
-//                            receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck); // retry in 10s interval
-//                            receivedStatusHandler.postDelayed(retryReceivedStatusCheck, NOT_YET_DELAY);
+//                            smsSendManager.addNextSmsToSendQueue(); // TEST code, uncomment when needed
+                            receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck); // retry in 10s interval
+                            receivedStatusHandler.postDelayed(retryReceivedStatusCheck, NOT_YET_DELAY);
                         }
                         else {
                             Log.d(Vapp.TAG, "Test SMS operator was blacklisted, cancelling");

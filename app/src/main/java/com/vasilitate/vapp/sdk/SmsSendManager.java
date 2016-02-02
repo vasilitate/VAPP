@@ -248,6 +248,10 @@ class SmsSendManager {
         return currentSmsIndex == 0;
     }
 
+    boolean isFirstInSequence() {
+        return isFirstInSequence;
+    }
+
     boolean hasFinishedPurchase() {
         return !(currentSmsIndex < currentProduct.getRequiredSmsCount());
     }
