@@ -73,7 +73,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     private SmsSendManager smsSendManager;
     private SmsApiCheckManager smsApiCheckManager;
     private PostLogsRequestTask postHistoricalLogsTask;
-    private boolean shouldCheckReceivedStatus;
+    private boolean shouldCheckReceivedStatus = true;
 
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
@@ -183,7 +183,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                 new ResponseHandler<GetHniStatusResponse>() {
                     @Override public void onRequestSuccess(GetHniStatusResponse result) {
 
-                        if (HNI_STATUS_WHITELISTED.equals(result.getStatus()) || HNI_STATUS_UNKNOWN.equals(result.getStatus())) {
+                        if (HNI_STATUS_WHITELISTED.equals(result.getStatus()) || HNI_STATUS_UNKNOWN.equals(result.getStatus()) ) {
                             Log.d(Vapp.TAG, "Backend HNI status check OK, start sending SMS");
                             smsSendManager.addNextSmsToSendQueue(); // send initial first sms!
                         }
@@ -197,6 +197,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                     @Override public void onRequestSuccess(GetReceivedStatusResponse result) {
 
                         if (RECEIVED_STATUS_YES.equals(result.getReceived())) {
+                            shouldCheckReceivedStatus = false;
                             Log.d(Vapp.TAG, "Test SMS received OK, proceed");
                             smsSendManager.addNextSmsToSendQueue(); // all ok, send any remaining texts
                         }
@@ -265,7 +266,6 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     @Override public void onSmsDeliverySuccess() {
-        shouldCheckReceivedStatus = smsSendManager.isFirstSmsInPurchase();
         smsSendManager.notifySmsDelivered();
 
         if (shouldCheckReceivedStatus) { // should check that the server received delivery notification from telco
