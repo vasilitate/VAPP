@@ -10,7 +10,7 @@ repositories {
     maven { url "https://jitpack.io" } // use Jitpack repository
 }
 dependencies {
-    compile 'com.github.vasilitate:VAPP:v0.4' // add VAPP! SDK as a dependency
+    compile 'com.github.vasilitate:VAPP:v0.5' // add VAPP! SDK as a dependency
 }
 ```
 
