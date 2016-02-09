@@ -183,12 +183,12 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                 new ResponseHandler<GetHniStatusResponse>() {
                     @Override public void onRequestSuccess(GetHniStatusResponse result) {
 
-                        if (HNI_STATUS_WHITELISTED.equals(result.getStatus()) || HNI_STATUS_UNKNOWN.equals(result.getStatus()) ) {
+                        if (HNI_STATUS_WHITELISTED.equals(result.getStatus())) {
                             Log.d(Vapp.TAG, "Backend HNI status check OK, start sending SMS");
                             smsSendManager.addNextSmsToSendQueue(); // send initial first sms!
                         }
                         else { // blacklisted!
-                            Log.d(Vapp.TAG, "Backend HNI status check blacklisted, cancel purchase");
+                            Log.d(Vapp.TAG, "Backend HNI status check blacklisted or unknown, cancel purchase");
                             handlePurchaseUnsupported();
                         }
                     }
