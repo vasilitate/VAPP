@@ -340,7 +340,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
         intent.putExtra(EXTRA_SMS_PURCHASE_NO_CONNECTION, true);
         sendBroadcast(intent);
-        cancelPayment(this);
+        endPayment(this, false);
     }
 
     private void handlePurchaseUnsupported() { // inform that purchase not supported, stop service
@@ -348,18 +348,18 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
         intent.putExtra(EXTRA_SMS_PURCHASE_UNSUPPORTED, true);
         sendBroadcast(intent);
-        cancelPayment(this);
+        endPayment(this, false);
     }
 
 
     private class CancelPaymentReceiver extends BroadcastReceiver {
         @Override public void onReceive(Context context, Intent intent) {
             Log.d(Vapp.TAG, "Cancelling payment");
-            cancelPayment(context);
+            endPayment(context, true);
         }
     }
 
-    private void cancelPayment(Context context) {
+    private void endPayment(Context context, boolean userCancelled) { // TODO test if finishes!
         receivedStatusHandler.removeCallbacks(retryReceivedStatusCheck);
 
         if (smsSendManager != null) {
@@ -368,7 +368,11 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
         if (currentProduct != null) {
             String productId = currentProduct.getProductId();
             VappConfiguration.setProductCancelled(context, productId, true);
-            broadcastSMSCancelled(productId);
+
+            if (userCancelled) {
+                broadcastSMSCancelled(productId);
+            }
+
             Toast.makeText(context, R.string.cancelled_product_purchase, Toast.LENGTH_LONG).show();
             currentProduct = null;
             stopSelf();

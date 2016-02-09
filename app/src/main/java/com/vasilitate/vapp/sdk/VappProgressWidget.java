@@ -39,9 +39,8 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
 
 	private ProgressBar smsProgress;
 	private TextView progressPercentageView;
-	private FontAwesomeText cancelButton;
 
-	private boolean hideError = false;
+    private boolean hideError = false;
     private boolean percentageMode = true;
 
     private Handler handler = new Handler();
@@ -51,20 +50,20 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
 
 	public VappProgressWidget(Context context) {
 		super(context );
-		intialise();
+		initialise();
 	}
 
 	public VappProgressWidget(Context context, AttributeSet attrs) {
 		super(context, attrs );
-		intialise(attrs);
+		initialise(attrs);
 	}
 
 	public VappProgressWidget(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
-		intialise(attrs);
+		initialise(attrs);
 	}
 	
-	private void intialise() {
+	private void initialise() {
 		LayoutInflater inflater = (LayoutInflater)getContext().
 					getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		View view = inflater.inflate(R.layout.vapp_progress_layout, this, false);
@@ -72,11 +71,12 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
 		smsProgress = (ProgressBar) view.findViewById(R.id.sms_progress);
 		progressPercentageView = (TextView) view.findViewById( R.id.progress_percentage_view);
 
-        cancelButton = (FontAwesomeText) view.findViewById(R.id.progress_cancel_button);
+        FontAwesomeText cancelButton = (FontAwesomeText) view.findViewById(R.id.progress_cancel_button);
         cancelButton.setVisibility(VappConfiguration.isCancellableProducts(getContext()) ? VISIBLE : GONE);
 
         cancelButton.setOnClickListener(new OnClickListener() {
-            @Override public void onClick(View v) {
+            @Override
+            public void onClick(View v) {
                 Vapp.cancelVappPayment(getContext());
             }
         });
@@ -84,9 +84,8 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
     	this.addView(view);
 	}
 
-	private void intialise(AttributeSet attrs) {
-
-		intialise();
+	private void initialise(AttributeSet attrs) {
+		initialise();
 
 		TypedArray a = getContext().getTheme().obtainStyledAttributes(
 				attrs,

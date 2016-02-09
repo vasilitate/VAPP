@@ -21,27 +21,29 @@ import java.util.List;
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final List<VappProduct> VAPP_PRODUCTS = MyProduct.getProducts();
+    private static final String SDK_KEY = "BG8R4X2PCXYCHRCRJTK6";
+    private static final boolean TEST_MODE = false;     // Test mode - don't send SMSs
+    private static final boolean CANCELLABLE_PRODUCTS = true;
 
     private TextView rankStatusView;
     private TextView livesStatusView;
     private Button buyCommanderRankButton;
     private Button buyMoreLivesButton;
-    private VappProgressWidget progressWidget;
 
+    private VappProgressWidget progressWidget;
     private VappProgressReceiver smsProgressReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
 
         try {
             Vapp.initialise(this,
-                            VAPP_PRODUCTS,
-                            false,     // Test mode - don't send SMSs
-                            true,
-                            "BG8R4X2PCXYCHRCRJTK6");
+                    VAPP_PRODUCTS,
+                    TEST_MODE,
+                    CANCELLABLE_PRODUCTS,
+                    SDK_KEY);
 
             buyCommanderRankButton = (Button) findViewById( R.id.buy_commander_rank_button);
             progressWidget = (VappProgressWidget) findViewById( R.id.progress_widget);
@@ -75,7 +77,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     @Override
     protected void onResume() {
         super.onResume();
-        setDisplayedStatus();
+        refreshProductPurchaseUi();
     }
 
     @Override
@@ -90,7 +92,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onClick(View view) {
-
         VappProduct product = (VappProduct) view.getTag();
 
         progressWidget.display(product, new VappProgressWidget.VappCompletionListener() {
@@ -106,11 +107,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
         });
 
-        if( Vapp.showVappPaymentScreen(MainActivity.this, product, false) ) {
-        }
+        Vapp.showVappPaymentScreen(MainActivity.this, product, TEST_MODE);
     }
 
-    public void setDisplayedStatus() {
+    public void refreshProductPurchaseUi() {
 
         // The user can buy multiple extra lives so check if we've reached the maximum...
         final VappProduct commanderRankProduct =  MyProduct.LEVEL_COMMANDER.getVappProduct();
@@ -118,7 +118,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         buyCommanderRankButton.setEnabled(enabled);
         buyCommanderRankButton.setTag(commanderRankProduct);
 
-        rankStatusView.setText("Rank: " + (enabled ? "Soldier" : "Commander"));
+        rankStatusView.setText(String.format("Rank: %s", (enabled ? "Soldier" : "Commander")));
 
         // The user can buy multiple extra lives so check if we've reached the maximum...
         final VappProduct extraLivesProduct =  MyProduct.EXTRA_LIVES.getVappProduct();
@@ -126,8 +126,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         enabled = currentLives < extraLivesProduct.getMaxProductCount();
         buyMoreLivesButton.setEnabled(enabled);
         buyMoreLivesButton.setTag(extraLivesProduct);
-
-        livesStatusView.setText("Lives: " + String.valueOf(currentLives)
-                                + " of " + String.valueOf(extraLivesProduct.getMaxProductCount()));
+        livesStatusView.setText(String.format("Lives: %d of %d", currentLives, extraLivesProduct.getMaxProductCount()));
     }
 }

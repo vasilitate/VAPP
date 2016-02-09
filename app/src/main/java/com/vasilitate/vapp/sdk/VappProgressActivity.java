@@ -2,6 +2,7 @@ package com.vasilitate.vapp.sdk;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -135,12 +136,16 @@ public class VappProgressActivity extends Activity implements VappProgressListen
                 requiredSmsCount);
 
         progressText.setText( text );
-        percentageView.setText(String.valueOf(progressPercentage) + "%");
+        percentageView.setText(getProgressText(progressPercentage));
+    }
+
+    private String getProgressText(int progressPercentage) {
+        return String.format("%d%%", progressPercentage);
     }
 
     @Override
     public void onProgressTick(int progressPercentage) {
-        percentageView.setText(String.valueOf(progressPercentage) + "%");
+        percentageView.setText(getProgressText(progressPercentage));
     }
 
     @Override
@@ -168,13 +173,23 @@ public class VappProgressActivity extends Activity implements VappProgressListen
         new AlertDialog.Builder(this)
                 .setMessage("No internet connection available. Please try again later.")
                 .setTitle("VAPP! Error")
-                .setPositiveButton("OK", null).show();
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        finish();
+                    }
+                }).show();
     }
 
     @Override public void onPurchaseUnsupported() {
         new AlertDialog.Builder(this)
                 .setMessage("VAPP does not currently support purchases on your operator.")
                 .setTitle("VAPP! Error")
-                .setPositiveButton("OK", null).show();
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        finish();
+                    }
+                }).show();
     }
 }
