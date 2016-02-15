@@ -1,8 +1,6 @@
 package com.vasilitate.vapp.sdk;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -28,9 +26,9 @@ public class VappProgressActivity extends Activity implements VappProgressListen
     private TextView percentageView;
     private View progressBar;
     private FontAwesomeText cancelButton;
+    private View vappProgressContainer;
 
     private VappProduct currentProduct;
-
     private VappProgressReceiver smsProgressReceiver;
 
     private boolean modalPaymentMode;
@@ -45,14 +43,18 @@ public class VappProgressActivity extends Activity implements VappProgressListen
         progressText = (TextView) findViewById( R.id.countdown_text );
         percentageView = (TextView) findViewById( R.id.percentage_view );
         progressBar = findViewById(R.id.vapp_progress_bar);
+        vappProgressContainer = findViewById(R.id.vapp_progress_container);
+
         cancelButton = (FontAwesomeText) findViewById(R.id.progress_cancel_button);
         cancelButton.setVisibility(VappConfiguration.isCancellableProducts(this) ? VISIBLE : GONE);
 
         cancelButton.setOnClickListener(new OnClickListener() {
-            @Override public void onClick(View v) {
+            @Override
+            public void onClick(View v) {
                 Vapp.cancelVappPayment(VappProgressActivity.this);
             }
         });
+
 
         modalPaymentMode = getIntent().getExtras().getBoolean(VappActions.EXTRA_MODAL, true);
 
@@ -96,12 +98,11 @@ public class VappProgressActivity extends Activity implements VappProgressListen
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         if( smsProgressReceiver != null ) {
             smsProgressReceiver.onDestroy();
             smsProgressReceiver = null;
         }
+        super.onDestroy();
     }
 
     @Override
@@ -143,6 +144,10 @@ public class VappProgressActivity extends Activity implements VappProgressListen
         return String.format("%d%%", progressPercentage);
     }
 
+    private void hideProgressViews() {
+        vappProgressContainer.setVisibility(INVISIBLE);
+    }
+
     @Override
     public void onProgressTick(int progressPercentage) {
         percentageView.setText(getProgressText(progressPercentage));
@@ -150,7 +155,7 @@ public class VappProgressActivity extends Activity implements VappProgressListen
 
     @Override
     public void onError(String message) {
-        Vapp.showErrorMessage( VappProgressActivity.this, message );
+        Vapp.showErrorMessage(VappProgressActivity.this, message);
     }
 
     @Override public void onCancelled() {
@@ -170,26 +175,12 @@ public class VappProgressActivity extends Activity implements VappProgressListen
     }
 
     @Override public void onNetworkFailure() {
-        new AlertDialog.Builder(this)
-                .setMessage("No internet connection available. Please try again later.")
-                .setTitle("VAPP! Error")
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        finish();
-                    }
-                }).show();
+        hideProgressViews();
+        Vapp.showErrorMessage(this, "No internet connection available. Please try again later.");
     }
 
     @Override public void onPurchaseUnsupported() {
-        new AlertDialog.Builder(this)
-                .setMessage("VAPP does not currently support purchases on your operator.")
-                .setTitle("VAPP! Error")
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        finish();
-                    }
-                }).show();
+        hideProgressViews();
+        Vapp.showErrorMessage(this, "VAPP does not currently support purchases on your operator.");
     }
 }

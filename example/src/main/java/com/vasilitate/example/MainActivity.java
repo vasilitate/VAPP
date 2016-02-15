@@ -18,11 +18,11 @@ import com.vasilitate.vapp.sdk.exceptions.VappException;
 import java.util.List;
 
 
-public class MainActivity extends Activity implements View.OnClickListener {
+public class MainActivity extends Activity implements View.OnClickListener, VappProgressWidget.VappCompletionListener {
 
     private static final List<VappProduct> VAPP_PRODUCTS = MyProduct.getProducts();
     private static final String SDK_KEY = "BG8R4X2PCXYCHRCRJTK6";
-    private static final boolean TEST_MODE = false;     // Test mode - don't send SMSs
+    private static final boolean TEST_MODE = true;     // Test mode - don't send SMSs
     private static final boolean CANCELLABLE_PRODUCTS = true;
 
     private TextView rankStatusView;
@@ -64,6 +64,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
             alertBuilder.setMessage( e.getMessage())
                     .setTitle("VAPP! Exception")
+                    .setCancelable(false)
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
@@ -91,22 +92,24 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     @Override
+    public void onError(String message) {
+        progressWidget.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
+    public void onErrorAcknowledged() {
+        progressWidget.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
+    public void onCompletion() {
+        progressWidget.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
     public void onClick(View view) {
         VappProduct product = (VappProduct) view.getTag();
-
-        progressWidget.display(product, new VappProgressWidget.VappCompletionListener() {
-            @Override
-            public void onError(String message) { }
-
-            @Override
-            public void onErrorAcknowledged() { }
-
-            @Override
-            public void onCompletion() {
-                progressWidget.setVisibility( View.INVISIBLE );
-            }
-        });
-
+        progressWidget.display(product, this);
         Vapp.showVappPaymentScreen(MainActivity.this, product, TEST_MODE);
     }
 

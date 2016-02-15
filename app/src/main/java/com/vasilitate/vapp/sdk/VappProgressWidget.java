@@ -229,16 +229,10 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
     }
 
     @Override public void onNetworkFailure() {
-        new AlertDialog.Builder(getContext())
-                .setMessage("No internet connection available. Please try again later.")
-                .setTitle("VAPP! Error")
-                .setPositiveButton("OK", null).show();
+        Vapp.showErrorMessage(getContext(), "No internet connection available. Please try again later.");
     }
 
     @Override public void onPurchaseUnsupported() {
-        new AlertDialog.Builder(getContext())
-                .setMessage("VAPP does not currently support purchases on your operator.")
-                .setTitle("VAPP! Error")
-                .setPositiveButton("OK", null).show();
+        Vapp.showErrorMessage(getContext(), "VAPP does not currently support purchases on your operator.");
     }
 }

@@ -519,12 +519,16 @@ public abstract class Vapp {
         AlertDialog.Builder alertBuilder = new AlertDialog.Builder(context);
         alertBuilder.setMessage(message)
                 .setTitle("VAPP! Error")
+                .setCancelable(false)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
 
                         if (context instanceof VappProgressActivity) {
                             ((VappProgressActivity) context).finish();
+                        }
+                        if (context instanceof VappProgressWidget.VappCompletionListener) {
+                            ((VappProgressWidget.VappCompletionListener)context).onErrorAcknowledged();
                         }
                     }
                 });
