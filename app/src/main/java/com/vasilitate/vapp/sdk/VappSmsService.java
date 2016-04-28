@@ -57,8 +57,8 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     private static final String INTENT_SMS_DELIVERED = "com.vasilitate.vapp.sdk.INTENT_SMS_DELIVERED";
     static final String INTENT_CANCEL_PAYMENT = "com.vasilitate.vapp.sdk.INTENT_CANCEL_PAYMENT";
 
-    private static final int SENT_SMS_REQUEST_CODE = 100;
-    private static final int DELIVERED_SMS_REQUEST_CODE = 101;
+    private static final int SENT_SMS_REQUEST_CODE = 0x64;
+    private static final int DELIVERED_SMS_REQUEST_CODE = 0x65;
 
     private VappProduct currentProduct;
     private boolean testMode;

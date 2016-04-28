@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.CountDownTimer;
+import android.support.annotation.Nullable;
 import android.telephony.SmsManager;
 import android.util.Log;
 
@@ -55,8 +56,11 @@ class SmsSendManager {
 
         // callbacks for broadcast receivers
         void onSmsDeliverySuccess();
+
         void onSmsDeliveryFailure();
+
         void onSmsSendComplete(Integer errorResId);
+
         void onSmsPurchaseCompleted();
     }
 
@@ -198,8 +202,7 @@ class SmsSendManager {
                         sentPI,
                         deliveredPI);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             if (sendListener != null) {
                 sendListener.onSmsSendError(e.getMessage());
             }
@@ -288,9 +291,10 @@ class SmsSendManager {
     private class SmsSentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            int resultCode = getResultCode();
             Integer errorResId = null;
 
-            switch (getResultCode()) {
+            switch (resultCode) {
                 case Activity.RESULT_OK:
                     // Nothing to do - only marking off the SMS when we know it's been
                     // Delivered
@@ -307,6 +311,10 @@ class SmsSendManager {
                 case RESULT_ERROR_RADIO_OFF:
                     errorResId = R.string.vapp_sms_sent_failure_radio_off;
                     break;
+                default:
+                    Log.d(Vapp.TAG, "Unexpected sent code " + resultCode);
+                    errorResId = R.string.vapp_sms_unexpected_err;
+                    break;
             }
             if (sendListener != null) {
                 sendListener.onSmsSendComplete(errorResId);
@@ -317,7 +325,10 @@ class SmsSendManager {
     private class SmsDeliveredReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (getResultCode()) {
+            int resultCode = getResultCode();
+            Integer errorResId = null;
+
+            switch (resultCode) {
                 case Activity.RESULT_OK:
                     if (sendListener != null) {
                         sendListener.onSmsDeliverySuccess();
@@ -328,6 +339,28 @@ class SmsSendManager {
                         sendListener.onSmsDeliveryFailure();
                     }
                     break;
+
+
+                case RESULT_ERROR_GENERIC_FAILURE:
+                    errorResId = R.string.vapp_sms_sent_failure_generic;
+                    break;
+                case RESULT_ERROR_NO_SERVICE:
+                    errorResId = R.string.vapp_sms_sent_failure_no_service;
+                    break;
+                case RESULT_ERROR_NULL_PDU:
+                    errorResId = R.string.vapp_sms_sent_failure_null_pdu;
+                    break;
+                case RESULT_ERROR_RADIO_OFF:
+                    errorResId = R.string.vapp_sms_sent_failure_radio_off;
+                    break;
+                default:
+                    Log.d(Vapp.TAG, "Unexpected delivery code " + resultCode);
+                    errorResId = R.string.vapp_sms_unexpected_err;
+                    break;
+            }
+
+            if (sendListener != null) {
+                sendListener.onSmsSendComplete(errorResId);
             }
         }
     }

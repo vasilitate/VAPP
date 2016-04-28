@@ -18,6 +18,7 @@
     <string name="cancel_payment_message">No further SMS will be sent</string>
     <string name="cancel_payment_title">Cancel Purchase?</string>
     <string name="cancelled_product_purchase">Cancelled product purchase</string>
+    <string name="vapp_sms_unexpected_err">Unexpected error. Please try again later.</string>
 
     <!--<string-array name="billing_route_A">-->
         <!--<item>23403</item>-->
