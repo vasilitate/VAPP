@@ -21,8 +21,8 @@ import java.util.List;
 public class MainActivity extends Activity implements View.OnClickListener, VappProgressWidget.VappCompletionListener {
 
     private static final List<VappProduct> VAPP_PRODUCTS = MyProduct.getProducts();
-    private static final String SDK_KEY = "BG8R4X2PCXYCHRCRJTK6";
-    private static final boolean TEST_MODE = true;     // Test mode - don't send SMSs
+    private static final String SDK_KEY = "A1EE9CB28A54C87C2539";
+    private static final boolean TEST_MODE = false;     // Test mode - don't send SMSs
     private static final boolean CANCELLABLE_PRODUCTS = true;
 
     private TextView rankStatusView;
