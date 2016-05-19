@@ -17,7 +17,6 @@ import com.vasilitate.vapp.sdk.exceptions.InvalidSmsCountException;
 import com.vasilitate.vapp.sdk.exceptions.InvalidVappNetworkException;
 import com.vasilitate.vapp.sdk.exceptions.InvalidVappNumberException;
 import com.vasilitate.vapp.sdk.exceptions.InvalidVappProductException;
-import com.vasilitate.vapp.sdk.exceptions.NetworkNotSupportedException;
 import com.vasilitate.vapp.sdk.exceptions.VappException;
 
 import java.io.BufferedReader;
@@ -28,7 +27,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -47,7 +45,6 @@ public abstract class Vapp {
 
     private static List<VappProduct> productList;
     private static List<String> deliveryNumbers;
-    private static Map<String, String> billingRouteMap;
 
     // All Vapp members are static so no need for a constructor.
     private Vapp() {
@@ -93,7 +90,6 @@ public abstract class Vapp {
 
         VappConfiguration.setTestMode(context, testMode);
         VappConfiguration.setCancellableProducts(context, cancellableProducts);
-        initialiseBillingRouteLookup(context);
 
         if (products == null || products.isEmpty()) {
             throw new InvalidVappProductException("No VAPP! products setup");
@@ -215,24 +211,6 @@ public abstract class Vapp {
 
 
     /**
-     * Checks if the Originating Network for the current device is declared within the network
-     * list used to initialise VAPP!
-     *
-     * @param context the current context
-     * @return true if the current device's network is supported.
-     * @throws VappException Vapp exception - see its message for details.
-     */
-    public static boolean isOriginatingNetworkSupported(Context context) throws VappException {
-        checkIfInitialised();
-        try {
-            return !TextUtils.isEmpty(getBillingRoute(context));
-        }
-        catch (VappException e) {
-            return false;
-        }
-    }
-
-    /**
      * Gets the number of SMS messages that have already been sent for an incomplete payment.
      *
      * @param context the current context
@@ -349,20 +327,6 @@ public abstract class Vapp {
         return null;
     }
 
-
-//    /**
-//     * The mobile number to which the SMS's will be sent for the current Originating
-//     * Network.
-//     *
-//     * @param context the current context
-//     * @return The mobile number to which the SMS's will be sent
-//     *
-//     * @exception VappException Vapp exception - see its message for details.
-//     */
-//    public static String getBillingRouteNumber(Context context) throws VappException {
-//        return getBillingRoute(context);
-//    }
-
     /**
      * Displays the Vapp Payment screen
      *
@@ -387,11 +351,16 @@ public abstract class Vapp {
             return false;
         }
 
-        if (!Vapp.isOriginatingNetworkSupported(context)) {
-            String originatingNetwork = Vapp.getOriginatingNetwork(context);
-            showErrorMessage(context, context.getString(R.string.vapp_network_not_supported, originatingNetwork));
-            return false;
-        }
+//        if (!Vapp.isOriginatingNetworkSupported(context)) { // TODO check if needed?
+//            String originatingNetwork = Vapp.getOriginatingNetwork(context);
+//
+//            if (originatingNetwork == null) {
+//                originatingNetwork = DEFAULT_ERR_CODE; // default err code
+//            }
+//
+//            showErrorMessage(context, context.getString(R.string.vapp_network_not_supported, originatingNetwork));
+//            return false;
+//        }
 
         Intent intent = new Intent(context, VappProgressActivity.class);
         intent.putExtra(VappActions.EXTRA_PRODUCT_ID, product.getProductId());
@@ -437,49 +406,6 @@ public abstract class Vapp {
     static String getOriginatingNetwork(Context context) throws VappException {
         checkIfInitialised();
         return getDeviceStateContract(context).getOriginatingNetwork();
-    }
-
-    /**
-     * Gets the billing route for a purchase
-     *
-     * @param context the current context
-     * @return the billing route as a string
-     * @throws VappException Vapp exception - see its message for details.
-     */
-    static String getBillingRoute(Context context) throws VappException {
-
-        checkIfInitialised();
-
-        String originatingNetwork = getOriginatingNetwork(context);
-
-        if (TextUtils.isEmpty(originatingNetwork)) {
-            throw new NetworkNotSupportedException("No Originating Network!");
-        }
-
-        // e.g. 234001, 23401 & 2341 all should match against 234/1
-
-        String normalisedNetwork = originatingNetwork.substring(0, 3) + "/";
-        String mnc = originatingNetwork.substring(3);
-
-        try {
-
-            Pattern leadingZeros = Pattern.compile("^([0]+)[0-9]");
-            Matcher matcher = leadingZeros.matcher(mnc);
-
-            if (matcher.find()) {
-                if (matcher.groupCount() == 1) {
-
-                    String mncLeadingZeros = matcher.group(1);
-                    mnc = mnc.substring(mncLeadingZeros.length());
-                }
-            }
-        }
-        catch (Exception e) {
-            throw new InvalidVappNetworkException(originatingNetwork);
-        }
-        normalisedNetwork += mnc;
-
-        return billingRouteMap.get(normalisedNetwork);
     }
 
     static VappSms generateSmsForProduct(Context context,
@@ -632,52 +558,4 @@ public abstract class Vapp {
         }
     }
 
-    private static void initialiseBillingRouteLookup(Context context) {
-
-        if (billingRouteMap == null) {
-
-            billingRouteMap = new HashMap<>();
-
-            // Note, future releases may need to support more than one 'billing route' for
-            // multiple destination telco's.
-            addBillingRouteToMap(context, R.array.billing_route_A, "A");
-        }
-    }
-
-    private static void addBillingRouteToMap(Context context, int mccMncArrayResId, String billingRoute) {
-
-        if (!TextUtils.isEmpty(billingRoute)) {
-
-            String[] mccMncs = context.getResources().getStringArray(mccMncArrayResId);
-
-            // format is mcc, mcc, ... / mnc, mnc,....
-
-            for (String mccMnc : mccMncs) {
-
-                String[] mccAndMnc = mccMnc.split("/");
-
-                if (mccAndMnc.length == 2) {
-
-                    String[] mccs = mccAndMnc[0].split(",");
-                    String[] mncs = mccAndMnc[1].split(",");
-
-                    if (mccs.length > 0 && mncs.length > 0) {
-
-                        for (String mcc : mccs) {
-                            for (String mnc : mncs) {
-
-                                String combination = mcc.trim() + "/" + mnc.trim();
-                                if (billingRouteMap.containsKey(combination)) {
-                                    throw new VappException("MCC/MNC combination is assigned to more than one billing route: " + combination);
-                                }
-                                else {
-                                    billingRouteMap.put(combination, billingRoute);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }

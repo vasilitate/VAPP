@@ -16,7 +16,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
     private String TEST_OPERATOR = "23410";
     private boolean IS_ROAMING = false;
     private boolean HAS_SIM = false;
-    private boolean NETWORK_SUPPORTED = false;
+//    private boolean NETWORK_SUPPORTED = false;
     private String TEST_IMEI = "35145120840121";
     private static final String NUMBER_RANGE = "+447458830000";
 
@@ -38,6 +38,6 @@ public class TelephonyManagerTest extends AndroidTestCase {
 
         assertEquals(HAS_SIM, Vapp.isSIMPresent(getContext()));
         assertEquals(IS_ROAMING, Vapp.isRoaming(getContext()));
-        assertEquals(NETWORK_SUPPORTED, Vapp.isOriginatingNetworkSupported(getContext()));
+//        assertEquals(NETWORK_SUPPORTED, Vapp.isOriginatingNetworkSupported(getContext()));
     }
 }
