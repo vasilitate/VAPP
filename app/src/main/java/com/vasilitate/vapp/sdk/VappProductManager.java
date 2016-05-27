@@ -12,7 +12,7 @@ abstract class VappProductManager {
 
     static final String INTERNATIONAL_PREFIX = "+";
     private static final float SMS_COUNT_VARIANT = 0.09f;       // 9%
-    private static final int MINIMUM_VARAIBLE_COUNT = 6;
+    private static final int MINIMUM_VARIABLE_COUNT = 6;
 
     private static final int MINIMUM_SMS_INTERVAL = 12;
 
@@ -117,7 +117,7 @@ abstract class VappProductManager {
 
         int requiredSMSCount = product.getRequiredSmsCount();
 
-        if( requiredSMSCount >= MINIMUM_VARAIBLE_COUNT ) {
+        if( requiredSMSCount >= MINIMUM_VARIABLE_COUNT) {
             final int variableRange = Math.round((float) requiredSMSCount * SMS_COUNT_VARIANT);
 
             Random random = new Random();

@@ -21,6 +21,24 @@ public class VappProduct {
     private int maxProductCount;
 
     /**
+     * Subscriptions can be scheduled every:
+     *      'x' days,
+     *      'x' weeks or
+     *      on a given day of each month.
+     */
+    private SubscriptionIntervalType intervalType;
+
+    /**
+     * If interval type is set to 'DAY' this is the number of days between each subscription
+     * request.
+     * If interval type is set to 'WEEK' this is the number of weeks between each subscription
+     * request.
+     * If interval type is 'DAY_OF_MONTH' this is the day of the month on which each the submission
+     * is requested (valid range is 1 - 28).
+     */
+    private int interval;
+
+    /**
      * Vapp Product Constructor.
      *
      * @param productId Vapp Product Id (1 - 15 alpha-numeric characters (no spaces)).
@@ -33,6 +51,28 @@ public class VappProduct {
         this.productId = productId;
         this.smsCount = smsCount;
         this.maxProductCount = maxProductCount;
+    }
+
+    /**
+     * Vapp Product Constructor.
+     *
+     * @param productId Vapp Product Id (1 - 15 alpha-numeric characters (no spaces)).
+     * @param smsCount the number of SMSs required to redeem one instance of this product.
+     * @param intervalType - days, weeks or day of month.
+     * @param interval if interval type is set to 'DAY' this is the number of days between
+     *                 each subscription request.
+     *                 If interval type is set to 'WEEK' this is the number of weeks between
+     *                 each subscription request.
+     *                 If interval type is 'DAY_OF_MONTH' this is the day of the month on which
+     *                 each the submission is requested (valid range is 1 - 28).
+     */
+    public VappProduct(String productId, int smsCount,
+                       SubscriptionIntervalType intervalType,
+                       int interval ) {
+        this.productId = productId;
+        this.smsCount = smsCount;
+        this.intervalType = intervalType;
+        this.interval = interval;
     }
 
     /**
@@ -54,5 +94,19 @@ public class VappProduct {
      */
     public int getMaxProductCount() {
         return maxProductCount;
+    }
+
+    /**
+     * @return the type of subscription interval (days, weeks or day of month).
+     */
+    public SubscriptionIntervalType getIntervalType() {
+        return intervalType;
+    }
+
+    /**
+     * @return the subscription interval.
+     */
+    public int getInterval() {
+        return interval;
     }
 }

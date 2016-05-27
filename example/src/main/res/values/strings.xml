@@ -6,4 +6,9 @@
 
     <string name="buy_commander_rank_button">Upgrade to Commander</string>
     <string name="buy_more_lives_button">Buy More Lives</string>
+
+    <string name="buy_10_day_subscription_button">Buy 10 day subscription</string>
+    <string name="buy_2_week_subscription_button">Buy 2 week subscription</string>
+    <string name="buy_28th_monthly_subscription_button">Buy 28th day of month subscription</string>
+
 </resources>

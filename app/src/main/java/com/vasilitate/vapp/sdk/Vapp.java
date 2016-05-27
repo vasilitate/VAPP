@@ -71,6 +71,7 @@ public abstract class Vapp {
      */
     public static synchronized void initialise(Context context,
                                                List<VappProduct> products,
+                                               List<VappProduct> subscriptions,
                                                boolean testMode,
                                                boolean cancellableProducts,
                                                String sdkKey)
@@ -91,11 +92,21 @@ public abstract class Vapp {
         VappConfiguration.setTestMode(context, testMode);
         VappConfiguration.setCancellableProducts(context, cancellableProducts);
 
-        if (products == null || products.isEmpty()) {
-            throw new InvalidVappProductException("No VAPP! products setup");
+        // Combine the lists of products and subscriptions...
+        if( products == null ) {
+            Vapp.productList = new ArrayList<>();
+        } else {
+            Vapp.productList = products;
+        }
+        if( subscriptions != null ) {
+            Vapp.productList.addAll(subscriptions);
         }
 
-        Vapp.productList = products;
+        if( productList.isEmpty() ) {
+            throw new InvalidVappProductException("No VAPP! products or subscriptions setup");
+        }
+
+
         Map<String, Boolean> uniqueNames = new HashMap<>();
 
         for (VappProduct product : productList) { // validate before changing state

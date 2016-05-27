@@ -52,6 +52,13 @@
             android:text="@string/buy_commander_rank_button"
             android:layout_marginBottom="10dp"/>
 
+        <Button
+            android:id="@+id/buy_more_lives_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:text="@string/buy_more_lives_button"/>
+
         <com.vasilitate.vapp.sdk.VappProgressWidget
             android:id="@+id/progress_widget"
             android:layout_width="match_parent"
@@ -60,18 +67,27 @@
             android:layout_marginBottom="10dp"
             vapp:percentageMode="false"/>
 
-        <!-- vapp:hideError="true"
-             vapp:percentageMode="true"
-             vapp:hideCount="true"
-             vapp:hideProgressBar="true"-->
-
-
         <Button
-            android:id="@+id/buy_more_lives_button"
+            android:id="@+id/day_subscription_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="16sp"
-            android:text="@string/buy_more_lives_button"/>
+            android:text="@string/buy_10_day_subscription_button"/>
+
+        <Button
+            android:id="@+id/week_subscription_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:text="@string/buy_2_week_subscription_button"/>
+
+        <Button
+            android:id="@+id/day_of_month_subscription_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:text="@string/buy_28th_monthly_subscription_button"/>
+
     </LinearLayout>
 
 </RelativeLayout>
