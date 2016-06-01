@@ -1,18 +1,16 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:tools="http://schemas.android.com/tools"
-                xmlns:vapp="http://schemas.android.com/apk/res-auto"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingLeft="@dimen/activity_horizontal_margin"
-                android:paddingRight="@dimen/activity_horizontal_margin"
-                android:paddingTop="@dimen/activity_vertical_margin"
-                android:paddingBottom="@dimen/activity_vertical_margin"
-                tools:context=".MainActivity">
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:vapp="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
+    <LinearLayout android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin"
         android:orientation="vertical">
 
         <TextView
@@ -24,39 +22,35 @@
         <TextView
             android:id="@+id/status_rank"
             android:layout_marginTop="20dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"/>
+            style="@style/productStatusText"/>
 
         <TextView
             android:id="@+id/status_lives"
-            android:layout_marginTop="5dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"/>
+            style="@style/productStatusText"/>
 
-    </LinearLayout>
+        <TextView
+            android:id="@+id/ten_day_subscription"
+            android:layout_marginTop="20dp"
+            style="@style/productStatusText"/>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"
-        android:orientation="vertical">
+        <TextView
+            android:id="@+id/two_week_subscription"
+            style="@style/productStatusText"/>
+
+        <TextView
+            android:id="@+id/monthly_subscription"
+            style="@style/productStatusText"/>
 
         <Button
             android:id="@+id/buy_commander_rank_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:layout_marginTop="20dp"
+            style="@style/productButton"
             android:text="@string/buy_commander_rank_button"
             android:layout_marginBottom="10dp"/>
 
         <Button
             android:id="@+id/buy_more_lives_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
+            style="@style/productButton"
             android:text="@string/buy_more_lives_button"/>
 
         <com.vasilitate.vapp.sdk.VappProgressWidget
@@ -69,25 +63,17 @@
 
         <Button
             android:id="@+id/day_subscription_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:text="@string/buy_10_day_subscription_button"/>
+            android:text="@string/buy_10_day_subscription_button"
+            style="@style/productButton"/>
 
         <Button
             android:id="@+id/week_subscription_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
+            style="@style/productButton"
             android:text="@string/buy_2_week_subscription_button"/>
 
         <Button
             android:id="@+id/day_of_month_subscription_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
+            style="@style/productButton"
             android:text="@string/buy_28th_monthly_subscription_button"/>
-
     </LinearLayout>
-
-</RelativeLayout>
+</ScrollView>
