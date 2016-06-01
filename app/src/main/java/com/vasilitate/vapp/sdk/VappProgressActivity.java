@@ -1,5 +1,6 @@
 package com.vasilitate.vapp.sdk;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,7 +26,6 @@ public class VappProgressActivity extends Activity implements VappProgressListen
     private TextView progressText;
     private TextView percentageView;
     private View progressBar;
-    private FontAwesomeText cancelButton;
     private View vappProgressContainer;
 
     private VappProduct currentProduct;
@@ -45,7 +45,7 @@ public class VappProgressActivity extends Activity implements VappProgressListen
         progressBar = findViewById(R.id.vapp_progress_bar);
         vappProgressContainer = findViewById(R.id.vapp_progress_container);
 
-        cancelButton = (FontAwesomeText) findViewById(R.id.progress_cancel_button);
+        FontAwesomeText cancelButton = (FontAwesomeText) findViewById(R.id.progress_cancel_button);
         cancelButton.setVisibility(VappConfiguration.isCancellableProducts(this) ? VISIBLE : GONE);
 
         cancelButton.setOnClickListener(new OnClickListener() {
@@ -140,8 +140,9 @@ public class VappProgressActivity extends Activity implements VappProgressListen
         percentageView.setText(getProgressText(progressPercentage));
     }
 
+    @SuppressLint("DefaultLocale")
     private String getProgressText(int progressPercentage) {
-        return String.format("%d%%", progressPercentage);
+        return String.format("%d%%", progressPercentage );
     }
 
     private void hideProgressViews() {

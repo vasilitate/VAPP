@@ -27,6 +27,7 @@ abstract class VappConfiguration {
     private static final String CANCELLABLE_PRODUCTS = APP_PREFIX + "CANCELLABLE_PRODUCTS";
     private static final String PRODUCT_CANCELLED = APP_PREFIX + "PRODUCT_CANCELLED";
     private static final String SUBSCRIPTION_END_DATE = APP_PREFIX + "SUBSCRIPTION_END_DATE";
+    private static final String SUBSCRIPTION_CANCELLED = APP_PREFIX + "SUBSCRIPTION_CANCELLED";
 
     static void setRequiredSmsCountForProduct(Context context, VappProduct product, int count) {
         String key = getKeyForProduct(product, REQUIRED_SMS_COUNT_SUFFIX);
@@ -97,6 +98,16 @@ abstract class VappConfiguration {
         String key = getKeyForProduct(product, SUBSCRIPTION_END_DATE);
         long time = getSharedPrefs(context).getLong(key, 0);
         return time == 0 ? null : new Date( time );
+    }
+
+    static void setSubscriptionCancelled(Context context, VappProduct product, boolean cancelled) {
+        String key = getKeyForProduct(product, SUBSCRIPTION_CANCELLED);
+        getSharedPrefsEditor(context).putBoolean(key, cancelled).apply();
+    }
+
+    static boolean isSubscriptionCancelled(Context context, VappProduct product) {
+        String key = getKeyForProduct(product, SUBSCRIPTION_CANCELLED);
+        return getSharedPrefs(context).getBoolean(key, false);
     }
 
     static void setTestMode(Context context, boolean mode) {

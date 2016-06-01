@@ -306,7 +306,7 @@ public abstract class Vapp {
     }
 
     /**
-     * Get's the subscription products current subscription end date.
+     * Gets the subscription products current subscription end date.
      *
      * @param context the current context
      * @param product the subscription product
@@ -317,6 +317,21 @@ public abstract class Vapp {
         checkIfInitialised();
         return VappProductManager.getSubscriptionEndDate(context, product);
     }
+
+//
+//    /**
+//     * Sets the subscription products subscription end date.
+//     *
+//     * @param context the current context
+//     * @param product the subscription product
+//     * @param endDate the subscription end date
+//     * @throws VappException Vapp exception - see its message for details.
+//     */
+//    public static void setSubscriptionEndDate( Context context, VappProduct product, Date endDate ) {
+//        checkIfInitialised();
+//        VappProductManager.setSubscriptionEndDate(context, product, endDate );
+//    }
+
 
     /**
      * Checks if the product is in the process of being paid for
@@ -341,12 +356,35 @@ public abstract class Vapp {
      */
     public static VappProduct getProductBeingPurchased(Context context) throws VappException {
 
+
+        VappProduct firstOutOfDateSubscription = null;
+
         for (VappProduct product : productList) {
 
             if (Vapp.isSMSPaymentInProgress(context, product)
                     && !VappConfiguration.isProductCancelled(context, product.getProductId())) {
                 return product;
             }
+
+            if( product.isSubscriptionProduct() ) {
+
+                boolean isCancelled = VappConfiguration.isSubscriptionCancelled( context, product );
+
+                if( !isCancelled ) {
+                    Date subscriptionEndDate = VappConfiguration.getSubscriptionEndDate(context, product);
+
+                    if( subscriptionEndDate != null && new Date().after( subscriptionEndDate )) {
+
+                        firstOutOfDateSubscription = product;
+                    }
+                }
+            }
+        }
+
+        // If no products currently being purchased, check if any subscriptions have passed their
+        // end dates.  Trigger a subscription update sequence if they have...
+        if( firstOutOfDateSubscription != null ) {
+            startSMSService(context, firstOutOfDateSubscription.getProductId());
         }
 
         return null;

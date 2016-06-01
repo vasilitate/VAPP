@@ -1,5 +1,12 @@
 package com.vasilitate.vapp.sdk;
 
+import android.content.Context;
+
+import com.vasilitate.vapp.sdk.exceptions.VappException;
+
+import java.util.Calendar;
+import java.util.Date;
+
 /**
  * Represents a Virtual Product which can be purchased by sending SMSs.
  */
@@ -108,5 +115,53 @@ public class VappProduct {
      */
     public int getInterval() {
         return interval;
+    }
+
+    /**
+     * @return true is a subscription product.
+     */
+    boolean isSubscriptionProduct() {
+        return intervalType != null;
+    }
+
+    // Made pubic for testing. - FIXME
+    public Date getNextSubscriptionEndDate(final Date startDate ) {
+
+        if( intervalType == null ) {
+            throw new VappException("getNextSubscriptionEndDate() called on non-subscription product");
+        }
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime( startDate );
+
+        switch( intervalType ) {
+            case DAY:
+                cal.add( Calendar.DATE, interval );
+                break;
+            case WEEK:
+                cal.add( Calendar.DATE, interval * 7 );
+                break;
+            case DAY_OF_MONTH:
+
+                // if the 29th, 30th or 31st, move onto the first on the next month...
+                if( interval > 28 ) {
+                    cal.set( Calendar.DAY_OF_MONTH, 1 );
+                    cal.add( Calendar.MONTH, 1);
+                } else {
+                    cal.set( Calendar.DAY_OF_MONTH, interval );
+                }
+                // Now add a month to the date.
+                cal.add(Calendar.MONTH, 1);
+                break;
+            default:
+                throw new VappException("getNextSubscriptionEndDate() unknown interval type.");
+        }
+
+        // Set the end time to a second before midnight...
+        cal.set( Calendar.HOUR_OF_DAY, 23 );
+        cal.set( Calendar.MINUTE, 59 );
+        cal.set( Calendar.SECOND, 59 );
+
+        return cal.getTime();
     }
 }

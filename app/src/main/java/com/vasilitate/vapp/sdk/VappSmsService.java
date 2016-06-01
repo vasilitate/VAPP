@@ -22,6 +22,7 @@ import com.vasilitate.vapp.sdk.network.response.GetHniStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse;
 import com.vasilitate.vapp.sdk.network.response.PostLogsResponse;
 
+import java.util.Date;
 import java.util.List;
 
 import static com.vasilitate.vapp.sdk.VappActions.ACTION_SMS_PROGRESS;
@@ -33,7 +34,6 @@ import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_COMPLETED;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_PURCHASE_NO_CONNECTION;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_PURCHASE_UNSUPPORTED;
 import static com.vasilitate.vapp.sdk.VappActions.EXTRA_SMS_SENT_COUNT;
-import static com.vasilitate.vapp.sdk.network.response.BaseResponse.HNI_STATUS_UNKNOWN;
 import static com.vasilitate.vapp.sdk.network.response.BaseResponse.HNI_STATUS_WHITELISTED;
 import static com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse.RECEIVED_STATUS_NOT_YET;
 import static com.vasilitate.vapp.sdk.network.response.GetReceivedStatusResponse.RECEIVED_STATUS_YES;
@@ -176,7 +176,6 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     /*
      * Handle Api Logic
      */
-
     private void setupApiCheckManager() { // handles successful responses from API
         smsApiCheckManager = new SmsApiCheckManager(restClient, this,
 
@@ -185,7 +184,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
 
                         if (HNI_STATUS_WHITELISTED.equals(result.getStatus())) {
                             Log.d(Vapp.TAG, "Backend HNI status check OK, start sending SMS");
-                            smsSendManager.addNextSmsToSendQueue(); // send initial first sms!
+                            smsSendManager.addNextSmsToSendQueue(); // send initial sms!
                         }
                         else { // blacklisted!
                             Log.d(Vapp.TAG, "Backend HNI status check blacklisted or unknown, cancel purchase");
@@ -231,6 +230,16 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                             completionHandler.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
+
+                                    //If a subscription product set it's new end date...
+                                    if( currentProduct.isSubscriptionProduct() ) {
+
+                                        Date subscriptionEndDate =
+                                                currentProduct.getNextSubscriptionEndDate( new Date());
+                                        VappConfiguration.setSubscriptionEndDate(
+                                                VappSmsService.this, currentProduct, subscriptionEndDate );
+                                    }
+
                                     terminateService();
                                 }
                             }, 2000);

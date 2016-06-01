@@ -64,8 +64,14 @@ abstract class VappProductManager {
     }
 
     static Date getSubscriptionEndDate(Context context, VappProduct product) {
-        return null;
+        checkProductExists(context, product);
+        return VappConfiguration.getSubscriptionEndDate(context, product);
     }
+
+//    static void setSubscriptionEndDate(Context context, VappProduct product, Date endDate ) {
+//        checkProductExists(context, product);
+//        VappConfiguration.setSubscriptionEndDate(context, product, endDate );
+//    }
 
     static boolean isSMSPaymentInProgress(Context context, VappProduct product) {
 
