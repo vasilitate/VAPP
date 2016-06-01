@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -25,6 +26,7 @@ abstract class VappConfiguration {
     private static final String TEST_MODE = APP_PREFIX + "TEST_MODE";
     private static final String CANCELLABLE_PRODUCTS = APP_PREFIX + "CANCELLABLE_PRODUCTS";
     private static final String PRODUCT_CANCELLED = APP_PREFIX + "PRODUCT_CANCELLED";
+    private static final String SUBSCRIPTION_END_DATE = APP_PREFIX + "SUBSCRIPTION_END_DATE";
 
     static void setRequiredSmsCountForProduct(Context context, VappProduct product, int count) {
         String key = getKeyForProduct(product, REQUIRED_SMS_COUNT_SUFFIX);
@@ -84,6 +86,17 @@ abstract class VappConfiguration {
     static boolean doesProductExist(Context context, VappProduct product) {
         String key = getKeyForProduct(product, PRODUCT_EXISTS_SUFFIX);
         return getSharedPrefs(context).getBoolean(key, false);
+    }
+
+    static void setSubscriptionEndDate(Context context, VappProduct product, Date endDate) {
+        String key = getKeyForProduct(product, SUBSCRIPTION_END_DATE);
+        getSharedPrefsEditor(context).putLong(key, endDate != null ? endDate.getTime() : 0).apply();
+    }
+
+    static Date getSubscriptionEndDate(Context context, VappProduct product) {
+        String key = getKeyForProduct(product, SUBSCRIPTION_END_DATE);
+        long time = getSharedPrefs(context).getLong(key, 0);
+        return time == 0 ? null : new Date( time );
     }
 
     static void setTestMode(Context context, boolean mode) {

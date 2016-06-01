@@ -5,6 +5,7 @@ import android.content.Context;
 import com.vasilitate.vapp.sdk.exceptions.InvalidVappProductException;
 import com.vasilitate.vapp.sdk.exceptions.InvalidVappProgressException;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -60,6 +61,10 @@ abstract class VappProductManager {
 
     static boolean isPaidFor(Context context, VappProduct product) {
         return getRedeemedCount(context, product ) > 0;
+    }
+
+    static Date getSubscriptionEndDate(Context context, VappProduct product) {
+        return null;
     }
 
     static boolean isSMSPaymentInProgress(Context context, VappProduct product) {

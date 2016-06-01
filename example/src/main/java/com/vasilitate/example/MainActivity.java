@@ -15,10 +15,14 @@ import com.vasilitate.vapp.sdk.VappProgressReceiver;
 import com.vasilitate.vapp.sdk.VappProgressWidget;
 import com.vasilitate.vapp.sdk.exceptions.VappException;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 
 public class MainActivity extends Activity implements View.OnClickListener, VappProgressWidget.VappCompletionListener {
+
+    private static final SimpleDateFormat SUBSCRIPTION_END_DATE_FORMAT = new SimpleDateFormat( "dd/MM/yy" );
 
     private static final List<VappProduct> VAPP_PRODUCTS = MyProduct.getProducts();
     private static final List<VappProduct> VAPP_SUBSCRIPTIONS = MySubscription.getSubscriptions();
@@ -29,6 +33,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Vapp
 
     private TextView rankStatusView;
     private TextView livesStatusView;
+    private TextView tenDaySubscriptionStatusView;
+    private TextView twoWeekSubscriptionStatusView;
+    private TextView monthlySubscriptionStatusView;
+
     private Button buyCommanderRankButton;
     private Button buyMoreLivesButton;
 
@@ -63,6 +71,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Vapp
 
             rankStatusView = (TextView) findViewById( R.id.status_rank);
             livesStatusView = (TextView) findViewById( R.id.status_lives);
+            tenDaySubscriptionStatusView = (TextView) findViewById( R.id.ten_day_subscription);
+            twoWeekSubscriptionStatusView = (TextView) findViewById( R.id.two_week_subscription);
+            monthlySubscriptionStatusView = (TextView) findViewById( R.id.monthly_subscription);
 
             buyCommanderRankButton.setOnClickListener(this);
             buyMoreLivesButton.setOnClickListener(this);
@@ -162,5 +173,25 @@ public class MainActivity extends Activity implements View.OnClickListener, Vapp
         buyMoreLivesButton.setEnabled(enabled);
         buyMoreLivesButton.setTag(extraLivesProduct);
         livesStatusView.setText(String.format("Lives: %d of %d", currentLives, extraLivesProduct.getMaxProductCount()));
+
+
+//        boolean isPaidFor = Vapp.isPaidFor( this, MySubscription.DAILY_SUBSCRIPTION.getVappProduct() );
+        Date subscriptionEndDate = Vapp.getSubscriptionEndDate( this, MySubscription.DAILY_SUBSCRIPTION.getVappProduct() );
+        String status = subscriptionEndDate == null ? "No Subscription" : "Subscription end date = "
+                                + SUBSCRIPTION_END_DATE_FORMAT.format( subscriptionEndDate );
+        String subscriptionText = "10 day subscription: " + status;
+        tenDaySubscriptionStatusView.setText(subscriptionText);
+
+        subscriptionEndDate = Vapp.getSubscriptionEndDate( this, MySubscription.WEEKLY_SUBSCRIPTION.getVappProduct() );
+        status = subscriptionEndDate == null ? "No Subscription" : "Subscription end date = "
+                + SUBSCRIPTION_END_DATE_FORMAT.format( subscriptionEndDate );
+        subscriptionText = "2 week subscription: " + status;
+        twoWeekSubscriptionStatusView.setText(subscriptionText);
+
+        subscriptionEndDate = Vapp.getSubscriptionEndDate( this, MySubscription.DAY_OF_MONTH_SUBSCRIPTION.getVappProduct() );
+        status = subscriptionEndDate == null ? "No Subscription" : "Subscription end date = "
+                + SUBSCRIPTION_END_DATE_FORMAT.format( subscriptionEndDate );
+        subscriptionText = "Monthly subscription: " + status;
+        monthlySubscriptionStatusView.setText(subscriptionText);
     }
 }

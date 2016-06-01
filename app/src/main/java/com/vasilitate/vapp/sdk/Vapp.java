@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -305,6 +306,19 @@ public abstract class Vapp {
     }
 
     /**
+     * Get's the subscription products current subscription end date.
+     *
+     * @param context the current context
+     * @param product the subscription product
+     * @return the subscription end date or null if the product has not been subscribed to.
+     * @throws VappException Vapp exception - see its message for details.
+     */
+    public static Date getSubscriptionEndDate( Context context, VappProduct product ) {
+        checkIfInitialised();
+        return VappProductManager.getSubscriptionEndDate(context, product);
+    }
+
+    /**
      * Checks if the product is in the process of being paid for
      *
      * @param context the current context
@@ -568,5 +582,4 @@ public abstract class Vapp {
             throw new VappException("Attempted to use Vapp methods before initialising SDK!");
         }
     }
-
 }
