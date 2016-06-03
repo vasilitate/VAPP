@@ -37,6 +37,7 @@ public class VappInitTest extends AndroidTestCase {
             try {
                 Vapp.initialise(getContext(),
                         productList,
+                        null,
                         true,
                         true, "BG8R4X2PCXYCHRCRJTK6");
                 fail(String.format("Failed to reject invalid SMS count '%d'", count));
@@ -57,6 +58,7 @@ public class VappInitTest extends AndroidTestCase {
             productList.add(new VappProduct("ExtraLives", count, 1));
             Vapp.initialise(getContext(),
                     productList,
+                    null,
                     true,
                     true, "BG8R4X2PCXYCHRCRJTK6");
         }
@@ -87,6 +89,7 @@ public class VappInitTest extends AndroidTestCase {
             try {
                 Vapp.initialise(getContext(),
                         productList,
+                        null,
                         true,
                         true, "BG8R4X2PCXYCHRCRJTK6");
                 fail("Failed to reject initialisation with invalid product list " + productList);
@@ -110,6 +113,7 @@ public class VappInitTest extends AndroidTestCase {
             try {
                 Vapp.initialise(getContext(),
                         productList,
+                        null,
                         true,
                         true, "BG8R4X2PCXYCHRCRJTK6");
                 fail();
@@ -130,6 +134,7 @@ public class VappInitTest extends AndroidTestCase {
             productList.add(new VappProduct(id, 1, 1));
             Vapp.initialise(getContext(),
                     productList,
+                    null,
                     true,
                     true, "BG8R4X2PCXYCHRCRJTK6");
         }

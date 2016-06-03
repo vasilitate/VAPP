@@ -25,6 +25,7 @@ public class PaymentProgressTest extends AndroidTestCase {
 
         Vapp.initialise(getContext(),
                 productList,
+                null,
                 true,
                 true,
                 "BG8R4X2PCXYCHRCRJTK6");

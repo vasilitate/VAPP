@@ -130,7 +130,7 @@ class SmsSendManager {
      */
     void addNextSmsToSendQueue() {
         if (sendIntervals.isEmpty()) {
-            return;
+            initialiseRandomSendIntervals();
         }
 
         if (isFirstInSequence) { // send immediately without waiting for an interval
@@ -141,7 +141,12 @@ class SmsSendManager {
             startSmsSendCountdown(sendIntervals.peek());
         }
 
-        int progressPercentage = (durationInSeconds - secondsRemaining) * 100 / durationInSeconds;
+        int progressPercentage;
+        if( durationInSeconds == 0 ) {
+            progressPercentage = 100;
+        } else {
+            progressPercentage = (durationInSeconds - secondsRemaining) * 100 / durationInSeconds;
+        }
 
         if (sendListener != null) {
             sendListener.onSmsProgressUpdate(currentSmsIndex, progressPercentage);

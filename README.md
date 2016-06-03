@@ -10,7 +10,7 @@ repositories {
     maven { url "https://jitpack.io" } // use Jitpack repository
 }
 dependencies {
-    compile 'com.github.vasilitate:VAPP:v0.5' // add VAPP! SDK as a dependency
+    compile 'com.github.vasilitate:VAPP:v0.6' // add VAPP! SDK as a dependency
 }
 ```
 
@@ -36,8 +36,9 @@ using something similar to the snippet below:
 private static final String MY_SDK_KEY = "ABCDEFG123";
 
 List<VappProduct> productList = new ArrayList<>();
+List<VappProduct> subscriptionList = new ArrayList<>();
 
-Vapp.initialise(this, productList, false, false, MY_SDK_KEY);
+Vapp.initialise(this, productList, subscriptionList, false, false, MY_SDK_KEY);
 ```
 
 ### Defining Products
@@ -50,7 +51,20 @@ private static final int MAX_PURCHASE_COUNT = 1;
 
 List<VappProduct> productList = new ArrayList<>();
 productList.add(new VappProduct(MY_PRODUCT_ID, SMS_COUNT, MAX_PURCHASE_COUNT);
-Vapp.initialise(this, VAPP_APP_ID, productList, vappNumberRange, false);
+Vapp.initialise(this, VAPP_APP_ID, productList, null, vappNumberRange, false);
+```
+
+### Defining Subscriptions
+Any subscriptions within your app must be passed into the SDK during initialisation. A VappProduct is used to define a subscription product and requires a unique alphabetic ID, the number of SMS messages which will be sent, the type of interval (either days, weeks or a given day of each month) and the interval.  If the interval type is days, the interval gives the number of days between subscription renewals.  Likewise if the interval type is weeks, the interval is the number of weeks between renewals.  If the interval type is day of month, the interval is the day of the month to renew on (allowed values are 1 to 28).
+
+```
+private static final String MY_PRODUCT_ID = "MySubscription";
+private static final int SMS_COUNT = 15;
+private static final int SUBSCRIPTION_INTERVAL = 10;        // Ten days
+
+List<VappProduct> subscriptionList = new ArrayList<>();
+productList.add(new VappProduct(MY_PRODUCT_ID, SMS_COUNT, SubscriptionIntervalType.DAY, SUBSCRIPTION_INTERVAL);
+Vapp.initialise(this, VAPP_APP_ID, null, productList, vappNumberRange, false);
 ```
 
 ### Purchasing Products

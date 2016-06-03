@@ -12,7 +12,7 @@ import java.util.List;
 public enum MySubscription {
 
     //               productId                  requiredSMSs   intervalType                   Interval
-    DAILY_SUBSCRIPTION(  "DailySub",            10,            SubscriptionIntervalType.DAY,  1),
+    DAILY_SUBSCRIPTION(  "DailySub",            8,             SubscriptionIntervalType.DAY,  10),
     WEEKLY_SUBSCRIPTION( "WeeklySub",           5,             SubscriptionIntervalType.WEEK, 2),
     DAY_OF_MONTH_SUBSCRIPTION( "DayOfMonthSub", 2,             SubscriptionIntervalType.DAY_OF_MONTH, 28);
 

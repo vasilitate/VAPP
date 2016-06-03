@@ -75,8 +75,12 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     private PostLogsRequestTask postHistoricalLogsTask;
     private boolean shouldCheckReceivedStatus = true;
 
+    private Intent originatingIntent;
+
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
+
+        originatingIntent = intent;
         testMode = VappConfiguration.isTestMode(this);
         vappDbHelper = new VappDbHelper(this);
         restClient = new VappRestClient(getString(R.string.api_endpoint), VappConfiguration.getSdkKey(this), testMode);
@@ -132,6 +136,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
 
     private void terminateService() {
         broadcastSMSsCompleted();
+        SubscriptionAlarmReceiver.completeWakefulIntent(originatingIntent);
         stopSelf();
     }
 
@@ -142,6 +147,12 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
      * @param intent the start command intent
      */
     private void handleStartCommand(Intent intent) {
+
+        if( intent == null ) {
+            Log.d(Vapp.TAG, "Null intent passed to VappSmsService");
+            return;
+        }
+
         String productId = intent.getStringExtra(EXTRA_PRODUCT_ID);
         currentProduct = Vapp.getProduct(productId);
 
@@ -187,7 +198,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                             smsSendManager.addNextSmsToSendQueue(); // send initial sms!
                         }
                         else { // blacklisted!
-                            Log.d(Vapp.TAG, "Backend HNI status check blacklisted or unknown, cancel purchase");
+                            Log.d(Vapp.TAG, "Backend HNI status check: " + result.getStatus());
                             handlePurchaseUnsupported();
                         }
                     }
@@ -238,6 +249,10 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                                                 currentProduct.getNextSubscriptionEndDate( new Date());
                                         VappConfiguration.setSubscriptionEndDate(
                                                 VappSmsService.this, currentProduct, subscriptionEndDate );
+
+                                        Log.d( Vapp.TAG, "New subscription end date: " +
+                                                currentProduct.getProductId() + " - " +
+                                                subscriptionEndDate.toString());
                                     }
 
                                     terminateService();
@@ -337,7 +352,7 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
     }
 
     private void broadcastSMSsCompleted() {
-        Log.d(Vapp.TAG, "Completed Sms purchase!");
+        Log.d(Vapp.TAG, "Broadcast SMS  purchase completed!");
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
         intent.putExtra(EXTRA_SMS_COMPLETED, true);
         sendBroadcast(intent);

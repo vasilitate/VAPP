@@ -347,8 +347,9 @@ public abstract class Vapp {
     }
 
     /**
-     * Returns any product which is currently being purchases.   This function must be called
-     * at started to allow for the resumption of any interrupted purchase.
+     * Returns any product which is currently being purchases or the first subscription encountered
+     * which is past it's renewal date.   This function must be called at start-up to allow for
+     * the resumption of any interrupted purchase.
      *
      * @param context the current context
      * @return the product being purchased (null if none are).
@@ -356,13 +357,12 @@ public abstract class Vapp {
      */
     public static VappProduct getProductBeingPurchased(Context context) throws VappException {
 
-
         VappProduct firstOutOfDateSubscription = null;
 
         for (VappProduct product : productList) {
 
-            if (Vapp.isSMSPaymentInProgress(context, product)
-                    && !VappConfiguration.isProductCancelled(context, product.getProductId())) {
+            if(  Vapp.isSMSPaymentInProgress(context, product)
+              && !VappConfiguration.isProductCancelled(context, product.getProductId())) {
                 return product;
             }
 
@@ -381,13 +381,7 @@ public abstract class Vapp {
             }
         }
 
-        // If no products currently being purchased, check if any subscriptions have passed their
-        // end dates.  Trigger a subscription update sequence if they have...
-        if( firstOutOfDateSubscription != null ) {
-            startSMSService(context, firstOutOfDateSubscription.getProductId());
-        }
-
-        return null;
+        return firstOutOfDateSubscription;
     }
 
     /**
@@ -619,5 +613,57 @@ public abstract class Vapp {
         if (!initialised) {
             throw new VappException("Attempted to use Vapp methods before initialising SDK!");
         }
+    }
+
+    /**
+     * Returns any product which is currently being purchases.   This function must be called
+     * at started to allow for the resumption of any interrupted purchase.
+     *
+     * @param context the current context
+     * @return the product being purchased (null if none are).
+     * @throws VappException Vapp exception - see its message for details.
+     */
+    static VappProduct processReboot(Context context) throws VappException {
+
+        VappProduct productToPurchase = getProductBeingPurchased(context);
+        if( productToPurchase != null ) {
+            Log.d( Vapp.TAG, "Vapp.Processing reboot - product: " + productToPurchase.getProductId() );
+
+//            Intent intent = new Intent( context, SubscriptionAlarmReceiver.class);
+//            context.sendBroadcast( intent );
+//            startSMSService(context, productToPurchase.getProductId());
+        }
+
+        Date nextSubscriptionEndDate = null;
+        for (VappProduct product : productList) {
+
+            if( product.isSubscriptionProduct() ) {
+
+                boolean isCancelled = VappConfiguration.isSubscriptionCancelled( context, product );
+
+                if( !isCancelled ) {
+                    Date subscriptionEndDate = VappConfiguration.getSubscriptionEndDate(context, product);
+
+                    // Check only for the earliest future end date.
+                    if(  subscriptionEndDate != null
+                      && new Date().before( subscriptionEndDate )
+                        && ( nextSubscriptionEndDate == null ||
+                             nextSubscriptionEndDate.after( subscriptionEndDate) ) ) {
+                        nextSubscriptionEndDate = subscriptionEndDate;
+                    }
+                }
+            }
+        }
+
+        if( nextSubscriptionEndDate != null ) {
+            Log.d( Vapp.TAG, "Vapp.Processing reboot - adding alarm: " + nextSubscriptionEndDate.toString() );
+            VappAlarmManager.addAlarm( context, nextSubscriptionEndDate );
+        }
+
+        return productToPurchase;
+    }
+
+    public static boolean isTestMode( Context context ) {
+        return VappConfiguration.isTestMode( context );
     }
 }

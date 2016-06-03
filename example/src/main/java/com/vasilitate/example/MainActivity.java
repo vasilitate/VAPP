@@ -17,19 +17,11 @@ import com.vasilitate.vapp.sdk.exceptions.VappException;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 
 public class MainActivity extends Activity implements View.OnClickListener, VappProgressWidget.VappCompletionListener {
 
     private static final SimpleDateFormat SUBSCRIPTION_END_DATE_FORMAT = new SimpleDateFormat( "dd/MM/yy" );
-
-    private static final List<VappProduct> VAPP_PRODUCTS = MyProduct.getProducts();
-    private static final List<VappProduct> VAPP_SUBSCRIPTIONS = MySubscription.getSubscriptions();
-
-    private static final String  SDK_KEY = "A1EE9CB28A54C87C2539";
-    private static final boolean TEST_MODE = true;      // FIXME  // Test mode - don't send SMSs
-    private static final boolean CANCELLABLE_PRODUCTS = true;
 
     private TextView rankStatusView;
     private TextView livesStatusView;
@@ -53,12 +45,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Vapp
         setContentView(R.layout.activity_main);
 
         try {
-            Vapp.initialise(this,
-                    VAPP_PRODUCTS,
-                    VAPP_SUBSCRIPTIONS,
-                    TEST_MODE,
-                    CANCELLABLE_PRODUCTS,
-                    SDK_KEY);
 
             buyCommanderRankButton = (Button) findViewById( R.id.buy_commander_rank_button);
             progressWidget = (VappProgressWidget) findViewById( R.id.progress_widget);
@@ -137,7 +123,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Vapp
     public void onClick(View view) {
         VappProduct product = (VappProduct) view.getTag();
         progressWidget.display(product, this);
-        Vapp.showVappPaymentScreen(MainActivity.this, product, TEST_MODE);
+        Vapp.showVappPaymentScreen(MainActivity.this, product, Vapp.isTestMode( this ) );
     }
 
     public void refreshProductPurchaseUi() {
