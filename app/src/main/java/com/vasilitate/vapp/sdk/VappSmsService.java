@@ -53,8 +53,8 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
      */
     public static final long NOT_YET_DELAY = 10000;
 
-    private static final String INTENT_SMS_SENT = "com.vasilitate.vapp.sdk.SMS_SENT";
-    private static final String INTENT_SMS_DELIVERED = "com.vasilitate.vapp.sdk.INTENT_SMS_DELIVERED";
+    static final String INTENT_SMS_SENT = "com.vasilitate.vapp.sdk.SMS_SENT";
+    static final String INTENT_SMS_DELIVERED = "com.vasilitate.vapp.sdk.INTENT_SMS_DELIVERED";
     static final String INTENT_CANCEL_PAYMENT = "com.vasilitate.vapp.sdk.INTENT_CANCEL_PAYMENT";
 
     private static final int SENT_SMS_REQUEST_CODE = 0x64;
@@ -122,6 +122,8 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
 
     @Override
     public void onDestroy() {
+        Log.i("VAPP", "onDestroy");
+
         if (smsSendManager != null) {
             smsSendManager.destroy();
         }
@@ -164,9 +166,9 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
             VappConfiguration.setProductCancelled(getApplicationContext(), productId, false);
 
             PendingIntent sentPI = PendingIntent.getBroadcast(this, SENT_SMS_REQUEST_CODE,
-                    new Intent(INTENT_SMS_DELIVERED), 0);
-            PendingIntent deliveredPI = PendingIntent.getBroadcast(this, DELIVERED_SMS_REQUEST_CODE,
                     new Intent(INTENT_SMS_SENT), 0);
+            PendingIntent deliveredPI = PendingIntent.getBroadcast(this, DELIVERED_SMS_REQUEST_CODE,
+                    new Intent(INTENT_SMS_DELIVERED), 0);
 
             smsSendManager = new SmsSendManager(currentProduct, testMode, sentPI, deliveredPI, this, this);
             setupApiCheckManager();
@@ -209,7 +211,11 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
                         if (RECEIVED_STATUS_YES.equals(result.getReceived())) {
                             shouldCheckReceivedStatus = false;
                             Log.d(Vapp.TAG, "Test SMS received OK, proceed");
-                            smsSendManager.addNextSmsToSendQueue(); // all ok, send any remaining texts
+                            if (smsSendManager.hasFinishedPurchase()) {
+                                terminateService();
+                            } else {
+                                smsSendManager.addNextSmsToSendQueue(); // all ok, send any remaining texts
+                            }
                         }
                         else if (RECEIVED_STATUS_NOT_YET.equals(result.getReceived())) {
                             Log.d(Vapp.TAG, "Test SMS not yet received, retry");

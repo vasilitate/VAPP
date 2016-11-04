@@ -126,16 +126,17 @@ abstract class VappProductManager {
 
     static int generateCurrentDownloadSMSCount( VappProduct product ) {
 
-        int requiredSMSCount = product.getRequiredSmsCount();
-
-        if( requiredSMSCount >= MINIMUM_VARIABLE_COUNT) {
-            final int variableRange = Math.round((float) requiredSMSCount * SMS_COUNT_VARIANT);
-
-            Random random = new Random();
-            return Math.round(requiredSMSCount - random.nextInt(variableRange + 1));
-        } else {
-            return requiredSMSCount;
-        }
+        return product.getRequiredSmsCount();
+//        int requiredSMSCount = product.getRequiredSmsCount();
+//
+//        if( requiredSMSCount >= MINIMUM_VARIABLE_COUNT) {
+//            final int variableRange = Math.round((float) requiredSMSCount * SMS_COUNT_VARIANT);
+//
+//            Random random = new Random();
+//            return Math.round(requiredSMSCount - random.nextInt(variableRange + 1));
+//        } else {
+//            return requiredSMSCount;
+//        }
     }
 
     /**

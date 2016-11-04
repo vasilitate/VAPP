@@ -22,23 +22,29 @@ import com.vasilitate.vapp.R;
  */
 public class VappProgressWidget extends RelativeLayout implements VappProgressListener {
 
-	public interface VappProgressWidgetListener {
+    public interface VappProgressWidgetListener {
 
-		void onSMSSent(int progress, int progressPercentage);
-		void onProgressTick(int progressPercentage);
-		void onError( String message );
-		void onErrorAcknowledged();
-		void onCompletion();
-	}
+        void onSMSSent(int progress, int progressPercentage);
 
-    public interface VappCompletionListener {
-        void onError( String message );
+        void onProgressTick(int progressPercentage);
+
+        void onError(String message);
+
         void onErrorAcknowledged();
+
         void onCompletion();
     }
 
-	private ProgressBar smsProgress;
-	private TextView progressPercentageView;
+    public interface VappCompletionListener {
+        void onError(String message);
+
+        void onErrorAcknowledged();
+
+        void onCompletion();
+    }
+
+    private ProgressBar smsProgress;
+    private TextView progressPercentageView;
 
     private boolean hideError = false;
     private boolean percentageMode = true;
@@ -48,28 +54,28 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
     private VappProgressWidgetListener progressListener;
     private VappCompletionListener completionListener;
 
-	public VappProgressWidget(Context context) {
-		super(context );
-		initialise();
-	}
+    public VappProgressWidget(Context context) {
+        super(context);
+        initialise();
+    }
 
-	public VappProgressWidget(Context context, AttributeSet attrs) {
-		super(context, attrs );
-		initialise(attrs);
-	}
+    public VappProgressWidget(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initialise(attrs);
+    }
 
-	public VappProgressWidget(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-		initialise(attrs);
-	}
-	
-	private void initialise() {
-		LayoutInflater inflater = (LayoutInflater)getContext().
-					getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.vapp_progress_layout, this, false);
+    public VappProgressWidget(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        initialise(attrs);
+    }
 
-		smsProgress = (ProgressBar) view.findViewById(R.id.sms_progress);
-		progressPercentageView = (TextView) view.findViewById( R.id.progress_percentage_view);
+    private void initialise() {
+        LayoutInflater inflater = (LayoutInflater) getContext().
+                getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = inflater.inflate(R.layout.vapp_progress_layout, this, false);
+
+        smsProgress = (ProgressBar) view.findViewById(R.id.sms_progress);
+        progressPercentageView = (TextView) view.findViewById(R.id.progress_percentage_view);
 
         FontAwesomeText cancelButton = (FontAwesomeText) view.findViewById(R.id.progress_cancel_button);
         cancelButton.setVisibility(VappConfiguration.isCancellableProducts(getContext()) ? VISIBLE : GONE);
@@ -77,56 +83,67 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
         cancelButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Vapp.cancelVappPayment(getContext());
+                android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(getContext());
+
+                builder.setTitle(R.string.cancel_payment_title)
+                        .setMessage(R.string.cancel_payment_message)
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                Vapp.cancelVappPayment(getContext());
+                            }
+                        });
+                builder.create().show();
             }
         });
 
-    	this.addView(view);
-	}
+        this.addView(view);
+    }
 
-	private void initialise(AttributeSet attrs) {
-		initialise();
+    private void initialise(AttributeSet attrs) {
+        initialise();
 
-		TypedArray a = getContext().getTheme().obtainStyledAttributes(
-				attrs,
-				R.styleable.ProgressWidget,
-				0, 0);
+        TypedArray a = getContext().getTheme().obtainStyledAttributes(
+                attrs,
+                R.styleable.ProgressWidget,
+                0, 0);
 
-		try {
+        try {
             hideError = a.getBoolean(R.styleable.ProgressWidget_hideError, false);
             percentageMode = a.getBoolean(R.styleable.ProgressWidget_percentageMode, true);
 
-			if( a.getBoolean(R.styleable.ProgressWidget_hideCount, false) ) {
-                smsProgress.setVisibility( View.GONE );
-			}
-			if( a.getBoolean(R.styleable.ProgressWidget_hideProgressBar, false) ) {
-				progressPercentageView.setVisibility(View.GONE);
-			}
+            if (a.getBoolean(R.styleable.ProgressWidget_hideCount, false)) {
+                smsProgress.setVisibility(View.GONE);
+            }
+            if (a.getBoolean(R.styleable.ProgressWidget_hideProgressBar, false)) {
+                progressPercentageView.setVisibility(View.GONE);
+            }
 
-		} finally {
-			a.recycle();
-		}
-	}
-
-	public void display( VappProduct product,
-						 VappProgressWidgetListener progressListener ) {
-
-		this.progressListener = progressListener;
-        display(product);
-	}
-
-    public void display( VappProduct product,
-                         VappCompletionListener completionListener ) {
-
-        this.completionListener = completionListener;
-        display( product );
+        } finally {
+            a.recycle();
+        }
     }
 
-    private void display( VappProduct product ) {
+    public void display(VappProduct product,
+                        VappProgressWidgetListener progressListener) {
+
+        this.progressListener = progressListener;
+        display(product);
+    }
+
+    public void display(VappProduct product,
+                        VappCompletionListener completionListener) {
+
+        this.completionListener = completionListener;
+        display(product);
+    }
+
+    private void display(VappProduct product) {
 
         setVisibility(View.VISIBLE);
 
-        if( percentageMode ) {
+        if (percentageMode) {
             smsProgress.setMax(100);
         } else {
             smsProgress.setMax(product.getRequiredSmsCount());
@@ -134,77 +151,76 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
     }
 
     @Override
-	public void onSMSSent(int progress, int progressPercentage) {
+    public void onSMSSent(int progress, int progressPercentage) {
 
         Log.d("Vapp!", "onSMSSent: " + progress + " : " + progress + " : " + progressPercentage);
 
-        if( percentageMode ) {
+        if (percentageMode) {
             smsProgress.setProgress(progressPercentage);
             progressPercentageView.setText(String.valueOf(progressPercentage) + "%");
         } else {
             smsProgress.setProgress(progress);
 
             int remaining = smsProgress.getMax() - progress;
-            progressPercentageView.setText(String.valueOf( remaining ));
+            progressPercentageView.setText(String.valueOf(remaining));
         }
 
-		if( progressListener != null ) {
-			progressListener.onSMSSent(progress, progressPercentage);
-		}
-	}
+        if (progressListener != null) {
+            progressListener.onSMSSent(progress, progressPercentage);
+        }
+    }
 
-	@Override
-	public void onProgressTick(int progressPercentage) {
+    @Override
+    public void onProgressTick(int progressPercentage) {
 
-        if( percentageMode ) {
+        if (percentageMode) {
             progressPercentageView.setText(String.valueOf(progressPercentage) + "%");
             smsProgress.setProgress(progressPercentage);
         }
 
         Log.d("Vapp!", "onProgressTick: " + progressPercentage);
 
-        if( progressListener != null ) {
-			progressListener.onProgressTick(progressPercentage);
-		}
-	}
+        if (progressListener != null) {
+            progressListener.onProgressTick(progressPercentage);
+        }
+    }
 
-	@Override
-	public void onError(String message) {
+    @Override
+    public void onError(String message) {
 
-		if(hideError) {
-			// There's been a problem with the VAPP! setup - display the problem and then exit.
-			AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getContext());
-			alertBuilder.setMessage(message)
-					.setTitle("VAPP! Error")
-					.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        if (hideError) {
+            // There's been a problem with the VAPP! setup - display the problem and then exit.
+            AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getContext());
+            alertBuilder.setMessage(message)
+                    .setTitle("VAPP! Error")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
                             if (progressListener != null) {
                                 progressListener.onErrorAcknowledged();
-                            }
-                            else if (completionListener != null) {
+                            } else if (completionListener != null) {
                                 completionListener.onErrorAcknowledged();
                             }
                         }
                     });
-		}
+        }
 
-        if( progressListener != null ) {
-			progressListener.onError(message);
-		} else if (completionListener != null ) {
+        if (progressListener != null) {
+            progressListener.onError(message);
+        } else if (completionListener != null) {
             completionListener.onError(message);
         }
-	}
+    }
 
-	@Override
-	public void onCompletion() {
+    @Override
+    public void onCompletion() {
         Log.d("Vapp!", "onCompletion");
 
 
         // Show all is complete!
         smsProgress.setProgress(smsProgress.getMax());
 
-        if( percentageMode ) {
+        if (percentageMode) {
             progressPercentageView.setText("100%");
         } else {
             progressPercentageView.setText("0");
@@ -216,23 +232,25 @@ public class VappProgressWidget extends RelativeLayout implements VappProgressLi
             public void run() {
                 if (progressListener != null) {
                     progressListener.onCompletion();
-                }
-                else if (completionListener != null) {
+                } else if (completionListener != null) {
                     completionListener.onCompletion();
                 }
             }
         }, 2000);
     }
 
-    @Override public void onCancelled() {
+    @Override
+    public void onCancelled() {
         setVisibility(GONE);
     }
 
-    @Override public void onNetworkFailure() {
+    @Override
+    public void onNetworkFailure() {
         Vapp.showErrorMessage(getContext(), "No internet connection available. Please try again later.");
     }
 
-    @Override public void onPurchaseUnsupported() {
+    @Override
+    public void onPurchaseUnsupported() {
         Vapp.showErrorMessage(getContext(), "VAPP does not currently support purchases on your operator.");
     }
 }

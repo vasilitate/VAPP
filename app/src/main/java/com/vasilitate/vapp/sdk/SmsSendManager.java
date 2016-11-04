@@ -21,14 +21,13 @@ import static android.telephony.SmsManager.RESULT_ERROR_GENERIC_FAILURE;
 import static android.telephony.SmsManager.RESULT_ERROR_NO_SERVICE;
 import static android.telephony.SmsManager.RESULT_ERROR_NULL_PDU;
 import static android.telephony.SmsManager.RESULT_ERROR_RADIO_OFF;
+import static com.vasilitate.vapp.sdk.VappSmsService.INTENT_SMS_DELIVERED;
+import static com.vasilitate.vapp.sdk.VappSmsService.INTENT_SMS_SENT;
 
 /**
  * Manages the sending of SMS messages at random intervals.
  */
 class SmsSendManager {
-
-    private static final String INTENT_SMS_SENT = "com.vasilitate.vapp.sdk.SMS_SENT";
-    private static final String INTENT_SMS_DELIVERED = "com.vasilitate.vapp.sdk.INTENT_SMS_DELIVERED";
 
     public interface SmsSendListener {
 
@@ -88,6 +87,8 @@ class SmsSendManager {
 
     private boolean isFirstInSequence = true;
 
+    private boolean completed = false;
+
     SmsSendManager(VappProduct currentProduct, boolean testMode,
                    PendingIntent sentPI, PendingIntent deliveredPI,
                    Service context, SmsSendListener sendListener) {
@@ -129,6 +130,11 @@ class SmsSendManager {
      * if the random interval since the last sending has not yet passed.
      */
     void addNextSmsToSendQueue() {
+        if(hasFinishedPurchase()) {
+            completeSmsPurchase();
+            return;
+        }
+
         if (sendIntervals.isEmpty()) {
             initialiseRandomSendIntervals();
         }
@@ -138,7 +144,11 @@ class SmsSendManager {
             sendSMS();
         }
         else { // start a countdown and send the sms once an interval has passed
-            startSmsSendCountdown(sendIntervals.peek());
+            if(!sendIntervals.isEmpty()) {
+                startSmsSendCountdown(sendIntervals.peek());
+            } else {
+                startSmsSendCountdown(10);
+            }
         }
 
         int progressPercentage;
@@ -275,8 +285,8 @@ class SmsSendManager {
         Service service = serviceRef.get();
 
         if (service != null) {
-            service.registerReceiver(smsSentReceiver, new IntentFilter(INTENT_SMS_SENT));
-            service.registerReceiver(smsDeliveredReceiver, new IntentFilter(INTENT_SMS_DELIVERED));
+            service.registerReceiver(smsSentReceiver, new IntentFilter(VappSmsService.INTENT_SMS_SENT));
+            service.registerReceiver(smsDeliveredReceiver, new IntentFilter(VappSmsService.INTENT_SMS_DELIVERED));
         }
     }
 
@@ -285,6 +295,11 @@ class SmsSendManager {
     }
 
     private void completeSmsPurchase() {
+        if(completed) {
+            return;
+        }
+
+        completed = true;
         // All SMSs have been sent for the current product, update the redeemed count...
         Vapp.addRedeemedProduct(context, currentProduct);
 

@@ -84,12 +84,13 @@ class SmsApiCheckManager {
         String random3 = vappSms.getRandomSegment3();
         String mcc = Vapp.getMobileCountryCode(context);
         String mnc = Vapp.getMobileNetworkCode(context);
+        String imei = vappSms.getImei();
 
         if (receivedStatusTask != null && receivedStatusTask.getStatus() == AsyncTask.Status.RUNNING) {
             receivedStatusTask.cancel(true);
         }
 
-        receivedStatusTask = new GetReceivedStatusRequestTask(restClient, mcc, mnc, ddi, random2, random3);
+        receivedStatusTask = new GetReceivedStatusRequestTask(restClient, mcc, mnc, ddi, random2, random3, imei);
         receivedStatusTask.setRequestListener(receivedStatusResponseListener);
         receivedStatusTask.execute();
     }

@@ -47,5 +47,5 @@ public interface VappRestApi {
      * @return a {@link BaseResponse}
      */
     GetReceivedStatusResponse getReceivedStatus(String mcc, String mnc, String ddi,
-                                                String random2, String random3) throws VappApiException, IOException;
+                                                String random2, String random3, String imei) throws VappApiException, IOException;
 }

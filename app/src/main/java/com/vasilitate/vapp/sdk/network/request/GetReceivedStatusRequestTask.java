@@ -16,19 +16,21 @@ public class GetReceivedStatusRequestTask extends RemoteNetworkTask<GetReceivedS
     private final String ddi;
     private final String random2;
     private final String random3;
+    private final String imei;
 
     public GetReceivedStatusRequestTask(VappRestClient restClient, String mcc, String mnc,
-                                        String ddi, String random2, String random3) {
+                                        String ddi, String random2, String random3, String imei) {
         super(restClient);
         this.mcc = mcc;
         this.mnc = mnc;
         this.ddi = ddi;
         this.random2 = random2;
         this.random3 = random3;
+        this.imei = imei;
     }
 
     @Override
     protected GetReceivedStatusResponse performApiCall() throws IOException, VappApiException {
-        return restClient.getReceivedStatus(mcc, mnc, ddi, random2, random3);
+        return restClient.getReceivedStatus(mcc, mnc, ddi, random2, random3, imei);
     }
 }

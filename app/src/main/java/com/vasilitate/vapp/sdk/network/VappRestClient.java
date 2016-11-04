@@ -103,7 +103,7 @@ public class VappRestClient implements VappRestApi {
 
     @Override
     public GetReceivedStatusResponse getReceivedStatus(String mcc, String mnc, String ddi,
-                                                       String random2, String random3) throws VappApiException, IOException {
+                                                       String random2, String random3, String imei) throws VappApiException, IOException {
         validateParameter(mnc, "mnc");
         validateParameter(mcc, "mcc");
         validateParameter(ddi, "ddi");
@@ -115,7 +115,7 @@ public class VappRestClient implements VappRestApi {
         mnc = stripPlusSymbol(mnc);
         mcc = stripPlusSymbol(mcc);
 
-        String address = combinePaths(endpoint, RESOURCE_RECEIVED_STATUS, mcc, mnc, ddi, random2, random3);
+        String address = combinePaths(endpoint, RESOURCE_RECEIVED_STATUS, mcc, mnc, ddi, random2, random3, imei);
         URL url = getUrlForAddress(address);
 
         HttpURLConnection connection = createHttpConnection(url, HTTP_GET);

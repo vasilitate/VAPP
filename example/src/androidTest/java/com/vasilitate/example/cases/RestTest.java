@@ -84,7 +84,8 @@ public class RestTest extends AndroidTestCase {
         GetReceivedStatusResponse receivedStatus = vappRestClient.getReceivedStatus(VALID_MCC, VALID_MNC, "+" +
                 VALID_DDI,
                 VALID_RANDOM_2,
-                VALID_RANDOM_3);
+                VALID_RANDOM_3,
+                ""); //TODO: set a valid imei
 
         assertNotNull(receivedStatus);
         assertEquals(GetReceivedStatusResponse.RECEIVED_STATUS_BLACKLISTED, receivedStatus.getReceived());
@@ -92,7 +93,7 @@ public class RestTest extends AndroidTestCase {
 
     private void checkInvalidReceivedStatusCall(String ddi, String rand2, String rand3) throws IOException {
         try {
-            vappRestClient.getReceivedStatus(VALID_MCC, VALID_MNC, ddi, rand2, rand3);
+            vappRestClient.getReceivedStatus(VALID_MCC, VALID_MNC, ddi, rand2, rand3, ""); //TODO: set a valid imei
             fail("Should reject invalid parameter");
         }
         catch (VappApiException ignored) {

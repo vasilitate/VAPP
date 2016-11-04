@@ -13,6 +13,7 @@ class VappSms {
     private static final String ROAMING_INDICATOR = "Roaming";
 
     private final String appVappId;
+    private final String userToken;
     private final int smsCount;
     private final int currentSms;
     private final String imei;
@@ -26,10 +27,11 @@ class VappSms {
     private final String deliveryNumber;
     private final String message;
 
-    VappSms(String appVappId, int smsCount, int currentSms, String imei,
+    VappSms(String appVappId, String userToken, int smsCount, int currentSms, String imei,
             boolean isRoaming, String networkName, String networkCountry, String deliveryNumber) {
 
         this.appVappId = appVappId;
+        this.userToken = userToken;
         this.smsCount = smsCount;
         this.currentSms = currentSms;
         this.imei = imei;
@@ -50,6 +52,7 @@ class VappSms {
 
         addFieldAndSpace(randomSegment1, sb); // 0-2 random hex
         addFieldAndSpace(appVappId, sb); // sdk key
+        addFieldAndSpace(userToken, sb); // user token
         addFieldAndSpace(imei, sb);
         addFieldAndSpace(Integer.toString(currentSms + 1), sb); // sms being sent
         addFieldAndSpace(Integer.toString(smsCount), sb); // total sms count
@@ -101,6 +104,10 @@ class VappSms {
 
     public String getDeliveryNumber() {
         return deliveryNumber;
+    }
+
+    public String getImei() {
+        return imei;
     }
 
     @Override public String toString() {

@@ -1,5 +1,6 @@
 package com.vasilitate.vapp.sdk;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -34,6 +35,9 @@ import java.util.regex.Pattern;
  * The Vapp SDK
  */
 public abstract class Vapp {
+    public static final int RESULT_COMPLETE = 1;
+    public static final int RESULT_CANCELED = 2;
+    public static final int RESULT_IN_PROGRESS = 3;
 
     public static final String TAG = "VAPP";
 
@@ -43,6 +47,7 @@ public abstract class Vapp {
 
     private static boolean initialised = false;
     private static String sdkKey;
+    private static String userToken = "invalid";
 
     private static List<VappProduct> productList;
     private static List<String> deliveryNumbers;
@@ -82,8 +87,7 @@ public abstract class Vapp {
 
         if (TextUtils.isEmpty(sdkKey)) {
             throw new VappException("Invalid value for SDK key - cannot be null!");
-        }
-        else {
+        } else {
             Vapp.sdkKey = sdkKey;
             VappConfiguration.setSdkKey(context, sdkKey);
         }
@@ -94,16 +98,16 @@ public abstract class Vapp {
         VappConfiguration.setCancellableProducts(context, cancellableProducts);
 
         // Combine the lists of products and subscriptions...
-        if( products == null ) {
+        if (products == null) {
             Vapp.productList = new ArrayList<>();
         } else {
             Vapp.productList = products;
         }
-        if( subscriptions != null ) {
+        if (subscriptions != null) {
             Vapp.productList.addAll(subscriptions);
         }
 
-        if( productList.isEmpty() ) {
+        if (productList.isEmpty()) {
             throw new InvalidVappProductException("No VAPP! products or subscriptions setup");
         }
 
@@ -130,6 +134,10 @@ public abstract class Vapp {
         }
     }
 
+    public static void setUserToken(String userToken) {
+        Vapp.userToken = userToken;
+    }
+
     /**
      * Reads delivery numbers from a csv configuration file and adds them to a list
      *
@@ -154,20 +162,17 @@ public abstract class Vapp {
                 throw new VappException("No valid numbers detected in VAPP number configuration file." +
                         "Please download a non-empty file from the VAPP developer console.");
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             String message = String.format("Error reading VAPP number configuration file '%s' - " +
                     "please check that the file is present in your assets directory, or read the" +
                     " Getting Started guide for more info.", RESOURCE_FILE_NUMBERS_CSV);
             throw new VappException(message, e);
-        }
-        finally {
+        } finally {
             try {
                 if (is != null) {
                     is.close();
                 }
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 Log.w(Vapp.TAG, "Error closing stream", e);
             }
         }
@@ -313,7 +318,7 @@ public abstract class Vapp {
      * @return the subscription end date or null if the product has not been subscribed to.
      * @throws VappException Vapp exception - see its message for details.
      */
-    public static Date getSubscriptionEndDate( Context context, VappProduct product ) {
+    public static Date getSubscriptionEndDate(Context context, VappProduct product) {
         checkIfInitialised();
         return VappProductManager.getSubscriptionEndDate(context, product);
     }
@@ -361,19 +366,19 @@ public abstract class Vapp {
 
         for (VappProduct product : productList) {
 
-            if(  Vapp.isSMSPaymentInProgress(context, product)
-              && !VappConfiguration.isProductCancelled(context, product.getProductId())) {
+            if (Vapp.isSMSPaymentInProgress(context, product)
+                    && !VappConfiguration.isProductCancelled(context, product.getProductId())) {
                 return product;
             }
 
-            if( product.isSubscriptionProduct() ) {
+            if (product.isSubscriptionProduct()) {
 
-                boolean isCancelled = VappConfiguration.isSubscriptionCancelled( context, product );
+                boolean isCancelled = VappConfiguration.isSubscriptionCancelled(context, product);
 
-                if( !isCancelled ) {
+                if (!isCancelled) {
                     Date subscriptionEndDate = VappConfiguration.getSubscriptionEndDate(context, product);
 
-                    if( subscriptionEndDate != null && new Date().after( subscriptionEndDate )) {
+                    if (subscriptionEndDate != null && new Date().after(subscriptionEndDate)) {
 
                         firstOutOfDateSubscription = product;
                     }
@@ -393,9 +398,9 @@ public abstract class Vapp {
      * @return true if the screen was displayed.
      * @throws VappException Vapp exception - see its message for details.
      */
-    public static boolean showVappPaymentScreen(Context context,
+    public static boolean showVappPaymentScreen(Activity context,
                                                 VappProduct product,
-                                                boolean modal) throws VappException {
+                                                boolean modal, int requestCode) throws VappException {
 
         // Check that this device is suitable for sending SMSs
         if (!Vapp.isSIMPresent(context)) {
@@ -422,7 +427,7 @@ public abstract class Vapp {
         Intent intent = new Intent(context, VappProgressActivity.class);
         intent.putExtra(VappActions.EXTRA_PRODUCT_ID, product.getProductId());
         intent.putExtra(VappActions.EXTRA_MODAL, modal);
-        context.startActivity(intent);
+        context.startActivityForResult(intent, requestCode);
         return true;
     }
 
@@ -437,18 +442,7 @@ public abstract class Vapp {
     public static void cancelVappPayment(final Context context) throws VappException {
 
         if (VappConfiguration.isCancellableProducts(context)) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-
-            builder.setTitle(R.string.cancel_payment_title)
-                    .setMessage(R.string.cancel_payment_message)
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            context.sendBroadcast(new Intent(VappSmsService.INTENT_CANCEL_PAYMENT));
-                        }
-                    });
-            builder.create().show();
+            context.sendBroadcast(new Intent(VappSmsService.INTENT_CANCEL_PAYMENT));
         }
     }
 
@@ -474,14 +468,16 @@ public abstract class Vapp {
         String originatingNetworkCountry = getOriginatingNetworkCountry(context);
         String deliveryNumber = VappProductManager.getRandomDeliveryNumber(deliveryNumbers);
 
-        return new VappSms(sdkKey, smsCount, smsIndex, imei,
+        return new VappSms(sdkKey, userToken,
+                smsCount, smsIndex, imei,
                 isRoaming(context),
                 originatingNetworkName,
                 originatingNetworkCountry,
                 deliveryNumber);
     }
 
-    @Nullable static String getUserPhoneNumber(Context context) {
+    @Nullable
+    static String getUserPhoneNumber(Context context) {
         TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         return tm.getLine1Number();
     }
@@ -511,7 +507,7 @@ public abstract class Vapp {
                             ((VappProgressActivity) context).finish();
                         }
                         if (context instanceof VappProgressWidget.VappCompletionListener) {
-                            ((VappProgressWidget.VappCompletionListener)context).onErrorAcknowledged();
+                            ((VappProgressWidget.VappCompletionListener) context).onErrorAcknowledged();
                         }
                     }
                 });
@@ -526,7 +522,8 @@ public abstract class Vapp {
      * @return the mcc
      * @throws VappException
      */
-    @Nullable static String getMobileCountryCode(Context context) throws VappException {
+    @Nullable
+    static String getMobileCountryCode(Context context) throws VappException {
         checkIfInitialised();
         String hni = getOriginatingNetwork(context);
 
@@ -543,7 +540,8 @@ public abstract class Vapp {
      * @return the mnc
      * @throws VappException
      */
-    @Nullable static String getMobileNetworkCode(Context context) throws VappException {
+    @Nullable
+    static String getMobileNetworkCode(Context context) throws VappException {
         checkIfInitialised();
         String hni = getOriginatingNetwork(context);
 
@@ -583,8 +581,7 @@ public abstract class Vapp {
             if (!ALPHANUMERIC_PATTERN.matcher(name).matches()) {
                 throw new InvalidApplicationVappIdException(String.format("Application Vapp Id '%s' must contain only alpha-numerics and be 1 to 15 characters long.", name));
             }
-        }
-        else {
+        } else {
             throw new InvalidApplicationVappIdException("Application Vapp Id must not be null. It must contain only alpha-numerics and be 1 to 15 characters long.");
         }
     }
@@ -595,8 +592,7 @@ public abstract class Vapp {
             if (!ALPHANUMERIC_PATTERN.matcher(productId).matches()) {
                 throw new InvalidProductIdException(String.format("Product Id '%s' must contain only alpha-numerics and be 1 to 15 characters long.", productId));
             }
-        }
-        else {
+        } else {
             throw new InvalidProductIdException("Product Id  must not be null. It must contain only alpha-numerics and be 1 to 15 characters long.");
         }
     }
@@ -626,8 +622,8 @@ public abstract class Vapp {
     static VappProduct processReboot(Context context) throws VappException {
 
         VappProduct productToPurchase = getProductBeingPurchased(context);
-        if( productToPurchase != null ) {
-            Log.d( Vapp.TAG, "Vapp.Processing reboot - product: " + productToPurchase.getProductId() );
+        if (productToPurchase != null) {
+            Log.d(Vapp.TAG, "Vapp.Processing reboot - product: " + productToPurchase.getProductId());
 
 //            Intent intent = new Intent( context, SubscriptionAlarmReceiver.class);
 //            context.sendBroadcast( intent );
@@ -637,33 +633,33 @@ public abstract class Vapp {
         Date nextSubscriptionEndDate = null;
         for (VappProduct product : productList) {
 
-            if( product.isSubscriptionProduct() ) {
+            if (product.isSubscriptionProduct()) {
 
-                boolean isCancelled = VappConfiguration.isSubscriptionCancelled( context, product );
+                boolean isCancelled = VappConfiguration.isSubscriptionCancelled(context, product);
 
-                if( !isCancelled ) {
+                if (!isCancelled) {
                     Date subscriptionEndDate = VappConfiguration.getSubscriptionEndDate(context, product);
 
                     // Check only for the earliest future end date.
-                    if(  subscriptionEndDate != null
-                      && new Date().before( subscriptionEndDate )
-                        && ( nextSubscriptionEndDate == null ||
-                             nextSubscriptionEndDate.after( subscriptionEndDate) ) ) {
+                    if (subscriptionEndDate != null
+                            && new Date().before(subscriptionEndDate)
+                            && (nextSubscriptionEndDate == null ||
+                            nextSubscriptionEndDate.after(subscriptionEndDate))) {
                         nextSubscriptionEndDate = subscriptionEndDate;
                     }
                 }
             }
         }
 
-        if( nextSubscriptionEndDate != null ) {
-            Log.d( Vapp.TAG, "Vapp.Processing reboot - adding alarm: " + nextSubscriptionEndDate.toString() );
-            VappAlarmManager.addAlarm( context, nextSubscriptionEndDate );
+        if (nextSubscriptionEndDate != null) {
+            Log.d(Vapp.TAG, "Vapp.Processing reboot - adding alarm: " + nextSubscriptionEndDate.toString());
+            VappAlarmManager.addAlarm(context, nextSubscriptionEndDate);
         }
 
         return productToPurchase;
     }
 
-    public static boolean isTestMode( Context context ) {
-        return VappConfiguration.isTestMode( context );
+    public static boolean isTestMode(Context context) {
+        return VappConfiguration.isTestMode(context);
     }
 }

@@ -1,17 +1,28 @@
-<manifest
-    package="com.vasilitate.vapp"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    >
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.vasilitate.vapp">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application>
-        <receiver android:name=".sdk.BootReceiver" android:enabled="true">
+
+        <activity
+            android:name=".sdk.VappProgressActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden|adjustUnspecified" />
+
+        <service
+            android:name=".sdk.VappSmsService"
+            android:exported="false" />
+
+        <receiver
+            android:name=".sdk.BootReceiver"
+            android:enabled="true">
             <intent-filter>
-                <action android:name ="android.intent.action.BOOT_COMPLETED"></action>
+                <action android:name="android.intent.action.BOOT_COMPLETED"></action>
             </intent-filter>
         </receiver>
     </application>

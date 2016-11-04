@@ -2,8 +2,11 @@ package com.vasilitate.vapp.sdk;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.widget.TextView;
 
@@ -51,7 +54,18 @@ public class VappProgressActivity extends Activity implements VappProgressListen
         cancelButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Vapp.cancelVappPayment(VappProgressActivity.this);
+                AlertDialog.Builder builder = new AlertDialog.Builder(VappProgressActivity.this);
+
+                builder.setTitle(R.string.cancel_payment_title)
+                        .setMessage(R.string.cancel_payment_message)
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                Vapp.cancelVappPayment(VappProgressActivity.this);
+                            }
+                        });
+                builder.create().show();
             }
         });
 
@@ -108,7 +122,8 @@ public class VappProgressActivity extends Activity implements VappProgressListen
     @Override
     public void onBackPressed() {
         if( !modalPaymentMode ) {
-            super.onBackPressed();
+            setResult(Vapp.RESULT_IN_PROGRESS);
+            finish();
         }
     }
 
@@ -160,6 +175,7 @@ public class VappProgressActivity extends Activity implements VappProgressListen
     }
 
     @Override public void onCancelled() {
+        setResult(Vapp.RESULT_CANCELED);
         finish();
     }
 
@@ -170,6 +186,7 @@ public class VappProgressActivity extends Activity implements VappProgressListen
         // of the down count..
         handler.postDelayed(new Runnable() {
             public void run() {
+                setResult(Vapp.RESULT_COMPLETE);
                 finish();
             }
         }, DELAY_AFTER_FOREGROUND_COMPLETION );

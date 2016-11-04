@@ -31,7 +31,7 @@ abstract class VappConfiguration {
 
     static void setRequiredSmsCountForProduct(Context context, VappProduct product, int count) {
         String key = getKeyForProduct(product, REQUIRED_SMS_COUNT_SUFFIX);
-        getSharedPrefsEditor(context).putInt(key, count).apply();
+        getSharedPrefsEditor(context).putInt(key, count).commit();
     }
 
     static int getRequiredSmsCountForProduct(Context context, VappProduct product) {
@@ -41,7 +41,7 @@ abstract class VappConfiguration {
 
     static void setCurrentDownloadSmsCountForProduct(Context context, VappProduct product, int count) {
         String key = getKeyForProduct(product, CURRENT_DOWNLOAD_SMS_COUNT_SUFFIX);
-        getSharedPrefsEditor(context).putInt(key, count).apply();
+        getSharedPrefsEditor(context).putInt(key, count).commit();
     }
 
     static int getCurrentDownloadSmsCountForProduct(Context context, VappProduct product) {
@@ -51,7 +51,7 @@ abstract class VappConfiguration {
 
     static void setProductCancelled(Context context, String productId, boolean cancelled) {
         String key = getKeyForProduct(productId, PRODUCT_CANCELLED);
-        getSharedPrefsEditor(context).putBoolean(key, cancelled).apply();
+        getSharedPrefsEditor(context).putBoolean(key, cancelled).commit();
     }
 
     static boolean isProductCancelled(Context context, String productId) {
@@ -61,7 +61,7 @@ abstract class VappConfiguration {
 
     static void setSentSmsCountForProduct(Context context, VappProduct product, int count) {
         String key = getKeyForProduct(product, SENT_SMS_COUNT_SUFFIX);
-        getSharedPrefsEditor(context).putInt(key, count).apply();
+        getSharedPrefsEditor(context).putInt(key, count).commit();
     }
 
     static int getSentSmsCountForProduct(Context context, VappProduct product) {
@@ -71,7 +71,7 @@ abstract class VappConfiguration {
 
     public static void setRedeemedCountForProduct(Context context, VappProduct product, int count) { // FIXME should be package visible
         String key = getKeyForProduct(product, REDEEMED_SUFFIX);
-        getSharedPrefsEditor(context).putInt(key, count).apply();
+        getSharedPrefsEditor(context).putInt(key, count).commit();
     }
 
     public static int getRedeemedCountForProduct(Context context, VappProduct product) { // FIXME should be package visible
@@ -81,7 +81,7 @@ abstract class VappConfiguration {
 
     static void setProductExists(Context context, VappProduct product, boolean exists) {
         String key = getKeyForProduct(product, PRODUCT_EXISTS_SUFFIX);
-        getSharedPrefsEditor(context).putBoolean(key, exists).apply();
+        getSharedPrefsEditor(context).putBoolean(key, exists).commit();
     }
 
     static boolean doesProductExist(Context context, VappProduct product) {
@@ -91,18 +91,18 @@ abstract class VappConfiguration {
 
     static void setSubscriptionEndDate(Context context, VappProduct product, Date endDate) {
         String key = getKeyForProduct(product, SUBSCRIPTION_END_DATE);
-        getSharedPrefsEditor(context).putLong(key, endDate != null ? endDate.getTime() : 0).apply();
+        getSharedPrefsEditor(context).putLong(key, endDate != null ? endDate.getTime() : 0).commit();
     }
 
     static Date getSubscriptionEndDate(Context context, VappProduct product) {
         String key = getKeyForProduct(product, SUBSCRIPTION_END_DATE);
         long time = getSharedPrefs(context).getLong(key, 0);
-        return time == 0 ? null : new Date( time );
+        return time == 0 ? null : new Date(time);
     }
 
     static void setSubscriptionCancelled(Context context, VappProduct product, boolean cancelled) {
         String key = getKeyForProduct(product, SUBSCRIPTION_CANCELLED);
-        getSharedPrefsEditor(context).putBoolean(key, cancelled).apply();
+        getSharedPrefsEditor(context).putBoolean(key, cancelled).commit();
     }
 
     static boolean isSubscriptionCancelled(Context context, VappProduct product) {
@@ -111,7 +111,7 @@ abstract class VappConfiguration {
     }
 
     static void setTestMode(Context context, boolean mode) {
-        getSharedPrefsEditor(context).putBoolean(TEST_MODE, mode).apply();
+        getSharedPrefsEditor(context).putBoolean(TEST_MODE, mode).commit();
     }
 
     static boolean isTestMode(Context context) {
@@ -119,7 +119,7 @@ abstract class VappConfiguration {
     }
 
     static void setCancellableProducts(Context context, boolean mode) {
-        getSharedPrefsEditor(context).putBoolean(CANCELLABLE_PRODUCTS, mode).apply();
+        getSharedPrefsEditor(context).putBoolean(CANCELLABLE_PRODUCTS, mode).commit();
     }
 
     static boolean isCancellableProducts(Context context) {
@@ -147,7 +147,7 @@ abstract class VappConfiguration {
                 }
 
                 if (shouldPrune) {
-                    sharedPrefs.edit().putBoolean(key, false).apply();
+                    sharedPrefs.edit().putBoolean(key, false).commit();
                 }
             }
         }
@@ -160,7 +160,7 @@ abstract class VappConfiguration {
      * @param sdkKey  the sdk key to store
      */
     static void setSdkKey(Context context, String sdkKey) {
-        getSharedPrefsEditor(context).putString(SDK_KEY, sdkKey).apply();
+        getSharedPrefsEditor(context).putString(SDK_KEY, sdkKey).commit();
     }
 
     /**

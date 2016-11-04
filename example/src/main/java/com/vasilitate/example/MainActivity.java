@@ -123,7 +123,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Vapp
     public void onClick(View view) {
         VappProduct product = (VappProduct) view.getTag();
         progressWidget.display(product, this);
-        Vapp.showVappPaymentScreen(MainActivity.this, product, Vapp.isTestMode( this ) );
+        Vapp.showVappPaymentScreen(MainActivity.this, product, Vapp.isTestMode( this ), 0);
     }
 
     public void refreshProductPurchaseUi() {
