@@ -47,7 +47,7 @@ public abstract class Vapp {
 
     private static boolean initialised = false;
     private static String sdkKey;
-    private static String userToken = "invalid";
+    private static String userToken = null;
 
     private static List<VappProduct> productList;
     private static List<String> deliveryNumbers;

@@ -1,5 +1,7 @@
 package com.vasilitate.vapp.sdk;
 
+import android.text.TextUtils;
+
 import java.util.Random;
 
 /**
@@ -52,7 +54,11 @@ class VappSms {
 
         addFieldAndSpace(randomSegment1, sb); // 0-2 random hex
         addFieldAndSpace(appVappId, sb); // sdk key
-        addFieldAndSpace(userToken, sb); // user token
+
+        if(!TextUtils.isEmpty(userToken)) {
+            addFieldAndSpace(userToken, sb); // user token
+        }
+
         addFieldAndSpace(imei, sb);
         addFieldAndSpace(Integer.toString(currentSms + 1), sb); // sms being sent
         addFieldAndSpace(Integer.toString(smsCount), sb); // total sms count
