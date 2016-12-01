@@ -50,7 +50,7 @@ private static final int SMS_COUNT = 15;
 private static final int MAX_PURCHASE_COUNT = 1;
 
 List<VappProduct> productList = new ArrayList<>();
-productList.add(new VappProduct(MY_PRODUCT_ID, SMS_COUNT, MAX_PURCHASE_COUNT);
+productList.add(new VappProduct.Builder(MY_PRODUCT_ID, SMS_COUNT).setMaxPurchaseCount(MAX_PURCHASE_COUNT).build());
 Vapp.initialise(this, VAPP_APP_ID, productList, null, vappNumberRange, false);
 ```
 
@@ -63,8 +63,14 @@ private static final int SMS_COUNT = 15;
 private static final int SUBSCRIPTION_INTERVAL = 10;        // Ten days
 
 List<VappProduct> subscriptionList = new ArrayList<>();
-productList.add(new VappProduct(MY_PRODUCT_ID, SMS_COUNT, SubscriptionIntervalType.DAY, SUBSCRIPTION_INTERVAL);
+productList.add(new VappProduct.Builder(MY_PRODUCT_ID, SMS_COUNT).setSubscriptionIntervalType(SubscriptionIntervalType.DAY, SUBSCRIPTION_INTERVAL).build());
 Vapp.initialise(this, VAPP_APP_ID, null, productList, vappNumberRange, false);
+```
+
+### Notification Message
+A notification will be displayed in the status bar once a purchase is complete. In order to change the text displayed, update the builder as below:
+```
+new VappProduct.Builder(MY_PRODUCT_ID, SMS_COUNT).setNotificationMessage("my custom message").build();
 ```
 
 ### Purchasing Products

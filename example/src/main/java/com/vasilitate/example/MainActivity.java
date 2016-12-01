@@ -44,6 +44,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Vapp
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+//        VappNotificationManager.post(this, MyProduct.LEVEL_COMMANDER.getVappProduct());
+//        VappNotificationManager.post(this, MySubscription.getSubscriptions().get(0));
+
         try {
 
             buyCommanderRankButton = (Button) findViewById( R.id.buy_commander_rank_button);

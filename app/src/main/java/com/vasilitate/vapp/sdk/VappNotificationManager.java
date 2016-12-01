@@ -12,12 +12,12 @@ import com.vasilitate.vapp.R;
 /**
  * Provides utility functions for posting status bar notifications
  */
-final class VappNotificationManager {
+public final class VappNotificationManager {
 
     static final int VAPP_NOTIFICATION_ID = 763091368;
 
 
-    static void post(Context context, VappProduct vappProduct) {
+    public static void post(Context context, VappProduct vappProduct) {
 
         Intent notificationIntent = new Intent(context, VappProgressActivity.class);
         notificationIntent.putExtra(VappActions.EXTRA_NOTIFICATION_INVOKED, true);
