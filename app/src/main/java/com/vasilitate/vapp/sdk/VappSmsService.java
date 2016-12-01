@@ -362,7 +362,10 @@ public class VappSmsService extends Service implements SmsSendManager.SmsSendLis
         Intent intent = new Intent(ACTION_SMS_PROGRESS);
         intent.putExtra(EXTRA_SMS_COMPLETED, true);
         sendBroadcast(intent);
-        VappNotificationManager.post(VappSmsService.this);
+
+        if (currentProduct != null) {
+            VappNotificationManager.post(VappSmsService.this, currentProduct);
+        }
     }
 
     private void handleNoConnectionAvailable() { // inform that no connection available, stop service

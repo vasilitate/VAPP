@@ -17,19 +17,29 @@ final class VappNotificationManager {
     static final int VAPP_NOTIFICATION_ID = 763091368;
 
 
-    static void post(Context context ) {
+    static void post(Context context, VappProduct vappProduct) {
 
         Intent notificationIntent = new Intent(context, VappProgressActivity.class);
-        notificationIntent.putExtra( VappActions.EXTRA_NOTIFICATION_INVOKED, true);
-        PendingIntent contentIntent = PendingIntent.getActivity( context,
+        notificationIntent.putExtra(VappActions.EXTRA_NOTIFICATION_INVOKED, true);
+        PendingIntent contentIntent = PendingIntent.getActivity(context,
                 (int) (Math.random() * 100),
                 notificationIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
+        String notificationTitle = vappProduct.getNotificationTitle();
+        String notificationMsg = vappProduct.getNotificationMessage();
+
+        if (notificationTitle == null) {
+            notificationTitle = context.getString(R.string.notification_completed_title);
+        }
+        if (notificationMsg == null) {
+            notificationMsg = context.getString(R.string.notification_completed_message);
+        }
+
         Notification notification = new NotificationCompat.Builder(context)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle(context.getString(R.string.notification_completed_title))
-                .setContentText(context.getString(R.string.notification_completed_message))
+                .setContentTitle(notificationTitle)
+                .setContentText(notificationMsg)
                 .setContentIntent(contentIntent)
                 .build();
 

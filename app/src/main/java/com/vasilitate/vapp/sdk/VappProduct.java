@@ -1,5 +1,7 @@
 package com.vasilitate.vapp.sdk;
 
+import android.content.Context;
+import android.support.annotation.StringRes;
 import android.text.TextUtils;
 
 import com.vasilitate.vapp.sdk.exceptions.VappException;
@@ -204,8 +206,22 @@ public class VappProduct {
         }
 
         /**
-         * Sets the message used by this product in status bar notifications. If null, a default
-         * message will be used.
+         * See {@link #setNotificationMessage(String)}
+         */
+        public Builder setNotificationMessage(@StringRes int notificationMessageId, Context context) {
+            return setNotificationMessage(context.getString(notificationMessageId));
+        }
+
+        /**
+         * See {@link #setNotificationTitle(String)}
+         */
+        public Builder setNotificationTitle(@StringRes int notificationTitleId, Context context) {
+            return setNotificationTitle(context.getString(notificationTitleId));
+        }
+
+        /**
+         * Sets the message used by this product in status bar notifications when a purchased is
+         * completed. If null, the SDK will use a default message will be used.
          *
          * @param notificationMessage the notification message
          * @return the message to be used in any status bar notifications for this product.
@@ -216,8 +232,8 @@ public class VappProduct {
         }
 
         /**
-         * Sets the title used by this product in status bar notifications. If null, a default
-         * message will be used.
+         * Sets the title used by this product in status bar notifications when a purchased is
+         * completed. If null, the SDK will use a default message will be used.
          *
          * @param notificationTitle the notification message
          * @return the title to be used in any status bar notifications for this product.
@@ -238,7 +254,8 @@ public class VappProduct {
          */
         public Builder setMaxProductCount(int maxProductCount) {
             this.maxProductCount = maxProductCount;
-            setSubscriptionInterval(null, 0);
+            this.subscriptionIntervalType = null;
+            this.interval = 0;
             return this;
         }
 
@@ -259,7 +276,7 @@ public class VappProduct {
         public Builder setSubscriptionInterval(SubscriptionIntervalType intervalType, int interval) {
             this.subscriptionIntervalType = intervalType;
             this.interval = interval;
-            setMaxProductCount(0);
+            this.maxProductCount = 0;
             return this;
         }
 

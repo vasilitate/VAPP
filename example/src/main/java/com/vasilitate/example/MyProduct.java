@@ -10,14 +10,21 @@ import java.util.List;
  */
 public enum MyProduct {
 
-    LEVEL_COMMANDER("LevelCommander", 10, 1),
-    EXTRA_LIVES("ExtraLives", 5, 6);
+    LEVEL_COMMANDER("LevelCommander", "MyProduct Purchase", "You have bought LevelCommander!", 10, 1),
+    EXTRA_LIVES("ExtraLives", "MyProduct Purchase", "You have bought ExtraLives!", 5, 6);
 
     private VappProduct vappProduct;
 
-    MyProduct(String productId, int requiredSMSs, int maxProductCount) {
+    MyProduct(String productId,
+              String notificationTitle,
+              String notificationMessage,
+              int requiredSMSs,
+              int maxProductCount) {
+
         vappProduct = new VappProduct.Builder(productId, requiredSMSs)
                 .setMaxProductCount(maxProductCount)
+                .setNotificationTitle(notificationTitle)
+                .setNotificationMessage(notificationMessage)
                 .build();
     }
 
