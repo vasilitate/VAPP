@@ -10,14 +10,15 @@ import java.util.List;
  */
 public enum MyProduct {
 
-    //               productId         requiredSMSs   maxProductCount
-    LEVEL_COMMANDER( "LevelCommander", 10,            1),
-    EXTRA_LIVES(     "ExtraLives",     5,             6);
+    LEVEL_COMMANDER("LevelCommander", 10, 1),
+    EXTRA_LIVES("ExtraLives", 5, 6);
 
     private VappProduct vappProduct;
 
-    MyProduct(String productId, int requiredSMSs, int maxProductCount ) {
-        vappProduct = new VappProduct( productId, requiredSMSs, maxProductCount );
+    MyProduct(String productId, int requiredSMSs, int maxProductCount) {
+        vappProduct = new VappProduct.Builder(productId, requiredSMSs)
+                .setMaxProductCount(maxProductCount)
+                .build();
     }
 
     public VappProduct getVappProduct() {
@@ -27,7 +28,7 @@ public enum MyProduct {
     public static List<VappProduct> getProducts() {
 
         List<VappProduct> productList = new ArrayList<>();
-        for( MyProduct product : values() ) {
+        for (MyProduct product : values()) {
             productList.add(product.vappProduct);
         }
         return productList;

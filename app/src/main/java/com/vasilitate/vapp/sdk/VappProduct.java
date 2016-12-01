@@ -1,6 +1,6 @@
 package com.vasilitate.vapp.sdk;
 
-import android.content.Context;
+import android.text.TextUtils;
 
 import com.vasilitate.vapp.sdk.exceptions.VappException;
 
@@ -25,15 +25,15 @@ public class VappProduct {
     /**
      * The maximum number of products of this type allowed to be owned at any one time.
      */
-    private int maxProductCount;
+    private final int maxProductCount;
 
     /**
      * Subscriptions can be scheduled every:
-     *      'x' days,
-     *      'x' weeks or
-     *      on a given day of each month.
+     * 'x' days,
+     * 'x' weeks or
+     * on a given day of each month.
      */
-    private SubscriptionIntervalType intervalType;
+    private final SubscriptionIntervalType intervalType;
 
     /**
      * If interval type is set to 'DAY' this is the number of days between each subscription
@@ -43,43 +43,38 @@ public class VappProduct {
      * If interval type is 'DAY_OF_MONTH' this is the day of the month on which each the submission
      * is requested (valid range is 1 - 28).
      */
-    private int interval;
+    private final int interval;
+
+    private final String notificationMessage;
+
+    private final String notificationTitle;
 
     /**
-     * Vapp Product Constructor.
-     *
-     * @param productId Vapp Product Id (1 - 15 alpha-numeric characters (no spaces)).
-     * @param smsCount the number of SMSs required to redeem one instance of this product.
-     * @param maxProductCount the maximum allowed number of instances of this product e.g. set
-     *                        to '1' if this product unlocks a privilege that can only be bought
-     *                        once.
+     * Deprecated, please use {@link Builder}
      */
-    public VappProduct(String productId, int smsCount, int maxProductCount ) {
-        this.productId = productId;
-        this.smsCount = smsCount;
-        this.maxProductCount = maxProductCount;
+    @Deprecated
+    public VappProduct(String productId, int smsCount, int maxProductCount) {
+        this(new Builder(productId, smsCount).setMaxProductCount(maxProductCount));
     }
 
     /**
-     * Vapp Product Constructor.
-     *
-     * @param productId Vapp Product Id (1 - 15 alpha-numeric characters (no spaces)).
-     * @param smsCount the number of SMSs required to redeem one instance of this product.
-     * @param intervalType - days, weeks or day of month.
-     * @param interval if interval type is set to 'DAY' this is the number of days between
-     *                 each subscription request.
-     *                 If interval type is set to 'WEEK' this is the number of weeks between
-     *                 each subscription request.
-     *                 If interval type is 'DAY_OF_MONTH' this is the day of the month on which
-     *                 each the submission is requested (valid range is 1 - 28).
+     * Deprecated, please use {@link Builder}
      */
+    @Deprecated
     public VappProduct(String productId, int smsCount,
                        SubscriptionIntervalType intervalType,
-                       int interval ) {
-        this.productId = productId;
-        this.smsCount = smsCount;
-        this.intervalType = intervalType;
-        this.interval = interval;
+                       int interval) {
+        this(new Builder(productId, smsCount).setSubscriptionInterval(intervalType, interval));
+    }
+
+    private VappProduct(Builder builder) {
+        this.productId = builder.productId;
+        this.smsCount = builder.smsCount;
+        this.maxProductCount = builder.maxProductCount;
+        this.intervalType = builder.subscriptionIntervalType;
+        this.interval = builder.interval;
+        this.notificationMessage = builder.notificationMessage;
+        this.notificationTitle = builder.notificationTitle;
     }
 
     /**
@@ -118,6 +113,20 @@ public class VappProduct {
     }
 
     /**
+     * @return the title to be used in any status bar notifications for this product.
+     */
+    public String getNotificationTitle() {
+        return notificationTitle;
+    }
+
+    /**
+     * @return the message to be used in any status bar notifications for this product.
+     */
+    public String getNotificationMessage() {
+        return notificationMessage;
+    }
+
+    /**
      * @return true is a subscription product.
      */
     boolean isSubscriptionProduct() {
@@ -125,30 +134,31 @@ public class VappProduct {
     }
 
     // Made pubic for testing. - FIXME
-    public Date getNextSubscriptionEndDate(final Date startDate ) {
+    public Date getNextSubscriptionEndDate(final Date startDate) {
 
-        if( intervalType == null ) {
+        if (intervalType == null) {
             throw new VappException("getNextSubscriptionEndDate() called on non-subscription product");
         }
 
         Calendar cal = Calendar.getInstance();
-        cal.setTime( startDate );
+        cal.setTime(startDate);
 
-        switch( intervalType ) {
+        switch (intervalType) {
             case DAY:
-                cal.add( Calendar.DATE, interval );
+                cal.add(Calendar.DATE, interval);
                 break;
             case WEEK:
-                cal.add( Calendar.DATE, interval * 7 );
+                cal.add(Calendar.DATE, interval * 7);
                 break;
             case DAY_OF_MONTH:
 
                 // if the 29th, 30th or 31st, move onto the first on the next month...
-                if( interval > 28 ) {
-                    cal.set( Calendar.DAY_OF_MONTH, 1 );
-                    cal.add( Calendar.MONTH, 1);
-                } else {
-                    cal.set( Calendar.DAY_OF_MONTH, interval );
+                if (interval > 28) {
+                    cal.set(Calendar.DAY_OF_MONTH, 1);
+                    cal.add(Calendar.MONTH, 1);
+                }
+                else {
+                    cal.set(Calendar.DAY_OF_MONTH, interval);
                 }
                 // Now add a month to the date.
                 cal.add(Calendar.MONTH, 1);
@@ -158,10 +168,107 @@ public class VappProduct {
         }
 
         // Set the end time to a second before midnight...
-        cal.set( Calendar.HOUR_OF_DAY, 23 );
-        cal.set( Calendar.MINUTE, 59 );
-        cal.set( Calendar.SECOND, 59 );
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
 
         return cal.getTime();
     }
+
+    /**
+     * Provides the arguments which are used to build a new {@link VappProduct}.
+     */
+    public static class Builder {
+
+        private final String productId;
+        private final int smsCount;
+
+        private int maxProductCount;
+        private SubscriptionIntervalType subscriptionIntervalType;
+        private int interval;
+        private String notificationMessage;
+        private String notificationTitle;
+
+        /**
+         * Creates a new Builder instance.
+         *
+         * @param productId Vapp Product Id (1 - 15 alpha-numeric characters (no spaces)).
+         * @param smsCount  the number of SMSs required to redeem one instance of this product.
+         */
+        public Builder(String productId, int smsCount) {
+            if (TextUtils.isEmpty(productId)) {
+                throw new IllegalArgumentException("productId cannot be empty");
+            }
+            this.productId = productId;
+            this.smsCount = smsCount;
+        }
+
+        /**
+         * Sets the message used by this product in status bar notifications. If null, a default
+         * message will be used.
+         *
+         * @param notificationMessage the notification message
+         * @return the message to be used in any status bar notifications for this product.
+         */
+        public Builder setNotificationMessage(String notificationMessage) {
+            this.notificationMessage = notificationMessage;
+            return this;
+        }
+
+        /**
+         * Sets the title used by this product in status bar notifications. If null, a default
+         * message will be used.
+         *
+         * @param notificationTitle the notification message
+         * @return the title to be used in any status bar notifications for this product.
+         */
+        public Builder setNotificationTitle(String notificationTitle) {
+            this.notificationTitle = notificationTitle;
+            return this;
+        }
+
+        /**
+         * Sets the max product count allowed for the product.
+         * <p>
+         * Calling this method resets {@link #setSubscriptionInterval(SubscriptionIntervalType, int)} to the default value.
+         *
+         * @param maxProductCount the maximum allowed number of instances of this product e.g. set
+         *                        to '1' if this product unlocks a privilege that can only be bought once.
+         * @return the current builder
+         */
+        public Builder setMaxProductCount(int maxProductCount) {
+            this.maxProductCount = maxProductCount;
+            setSubscriptionInterval(null, 0);
+            return this;
+        }
+
+        /**
+         * Sets the subscription interval used for the product.
+         * <p>
+         * Calling this method resets {@link #setMaxProductCount(int)} to the default value.
+         *
+         * @param intervalType - days, weeks or day of month.
+         * @param interval     if interval type is set to 'DAY' this is the number of days between
+         *                     each subscription request.
+         *                     If interval type is set to 'WEEK' this is the number of weeks between
+         *                     each subscription request.
+         *                     If interval type is 'DAY_OF_MONTH' this is the day of the month on which
+         *                     each the submission is requested (valid range is 1 - 28).
+         * @return the current builder
+         */
+        public Builder setSubscriptionInterval(SubscriptionIntervalType intervalType, int interval) {
+            this.subscriptionIntervalType = intervalType;
+            this.interval = interval;
+            setMaxProductCount(0);
+            return this;
+        }
+
+        /**
+         * @return a new instance of {@link VappProduct}
+         */
+        public VappProduct build() {
+            return new VappProduct(this);
+        }
+    }
+
 }

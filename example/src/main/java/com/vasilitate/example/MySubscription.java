@@ -11,18 +11,20 @@ import java.util.List;
  */
 public enum MySubscription {
 
-    //               productId                  requiredSMSs   intervalType                   Interval
-    DAILY_SUBSCRIPTION(  "DailySub",            8,             SubscriptionIntervalType.DAY,  10),
-    WEEKLY_SUBSCRIPTION( "WeeklySub",           5,             SubscriptionIntervalType.WEEK, 2),
-    DAY_OF_MONTH_SUBSCRIPTION( "DayOfMonthSub", 2,             SubscriptionIntervalType.DAY_OF_MONTH, 28);
+    DAILY_SUBSCRIPTION("DailySub", 8, SubscriptionIntervalType.DAY, 10),
+    WEEKLY_SUBSCRIPTION("WeeklySub", 5, SubscriptionIntervalType.WEEK, 2),
+    DAY_OF_MONTH_SUBSCRIPTION("DayOfMonthSub", 2, SubscriptionIntervalType.DAY_OF_MONTH, 28);
 
     private VappProduct vappProduct;
 
     MySubscription(String productId,
                    int requiredSMSs,
                    SubscriptionIntervalType intervalType,
-                   int interval ) {
-        vappProduct = new VappProduct( productId, requiredSMSs, intervalType, interval );
+                   int interval) {
+
+        vappProduct = new VappProduct.Builder(productId, requiredSMSs)
+                .setSubscriptionInterval(intervalType, interval)
+                .build();
     }
 
     public VappProduct getVappProduct() {
@@ -32,7 +34,7 @@ public enum MySubscription {
     public static List<VappProduct> getSubscriptions() {
 
         List<VappProduct> productList = new ArrayList<>();
-        for( MySubscription product : values() ) {
+        for (MySubscription product : values()) {
             productList.add(product.vappProduct);
         }
         return productList;
