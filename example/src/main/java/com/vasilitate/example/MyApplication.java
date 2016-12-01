@@ -13,7 +13,7 @@ public class MyApplication extends Application {
     private static final List<VappProduct> VAPP_SUBSCRIPTIONS = MySubscription.getSubscriptions();
 
     private static final String  SDK_KEY = "A1EE9CB28A54C87C2539";
-    private static final boolean TEST_MODE = true;      // FIXME  // Test mode - don't send SMSs
+    private static final boolean TEST_MODE = false;      // FIXME  // Test mode - don't send SMSs
     private static final boolean CANCELLABLE_PRODUCTS = true;
 
 
